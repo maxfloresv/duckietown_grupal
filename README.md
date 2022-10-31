@@ -8,6 +8,7 @@ Se trata de un robot que escucha instrucciones y responde mediante voz. Algunas 
 * Baila Duckiebot, baila.
 * Palabras clave ocultas de interacción para realizar acciones secretas (*Easter Eggs*).
 
+La información sobre los avances del proyecto puede ser encontrada en la [wiki](https://github.com/maxfloresv/robot_interactivo/wiki).
 
 ### 📄 Documentación adicional:
 Para el desarrollo del proyecto, se ocupó un control de Xbox 360, con la siguiente disposición de botones:
