@@ -1,5 +1,5 @@
 # 🦆 Duckiebot interactivo
-Este proyecto se está realizando para el curso **CD2201 Módulo Interdisciplinario** (Duckietown) en el semestre 2022-2.
+Este proyecto se está realizando para el curso **CD2201 Módulo Interdisciplinario** (Duckietown).
 
 Se trata de un robot que escucha instrucciones y responde mediante voz. Algunas de las interacciones adicionales que se buscan implementar son:
 
