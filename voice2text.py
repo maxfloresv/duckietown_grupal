@@ -1,7 +1,7 @@
-#Programa que convierte voz a texto
-import speech_recognition as sr
-from std_msgs.msg import String
 import rospy
+from std_msgs.msg import String
+
+import speech_recognition as sr
 
 class Template(object):
 	def __init__(self, args):
@@ -14,31 +14,32 @@ class Template(object):
 		# Programa de voz
 		self.r = sr.Recognizer()
 
-
 	def callback(self):
-		self.pub.publish("test")
 		with sr.Microphone() as source:
 			print("Quack quack...") # que lo diga
 			audio = self.r.listen(source)
+			
 			try:
 				text = self.r.recognize_google(audio, language='es-ES')
 				print("Lo quack dijiste fue:", str(text))
 				msg = String()
 				msg.data = str(text)
 				self.pub.publish(msg)
+				
 			except Exception as e:
 				print("No quackche", str(e))
 		
 def main():
+	# Nodo local del PC
 	rospy.init_node("pc")
 	
-	# python voice2text.py
 	obj = Template('args')
 	
+	# Ejecutar programa cada 10ms
 	rate = rospy.Rate(10)
 	while not rospy.is_shutdown():
 		obj.callback()
 		rate.sleep()
 
-if __name__ =='__main__':
+if __name__ == '__main__':
 	main()
