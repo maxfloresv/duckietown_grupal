@@ -1,22 +1,22 @@
 #!/usr/bin/env python
 
-import rospy #importar ros para python
-from std_msgs.msg import String, Int32 # importar mensajes de ROS tipo String y tipo Int32
-from geometry_msgs.msg import Twist # importar mensajes de ROS tipo geometry / Twist
-from sensor_msgs.msg import Image, Joy # importar mensajes de ROS tipo Image
-import cv2 # importar libreria opencv
-from cv_bridge import CvBridge # importar convertidor de formato de imagenes
-import numpy as np # importar libreria numpy
-import math
-import speech_recognition as sr #Importar Libreria Speech Recognition
+# ROS cosas:
+import rospy 
+# http://wiki.ros.org/std_msgs
+from std_msgs.msg import String, Int32 
+# http://wiki.ros.org/geometry_msgs
+from geometry_msgs.msg import Twist
+# http://wiki.ros.org/sensor_msgs
+from sensor_msgs.msg import Image, Joy
+# Se pueden ver dentro del Duckiebot
 from duckietown_msgs.msg import Twist2DStamped
 
-"""
-v.1.0.R
-Este programa permite mover al Duckiebot dentro del simulador
-usando control por voz.
-Version basica, adaptado para ROS
-"""
+# Procesamiento de imgs con ML:
+import cv2 
+from cv_bridge import CvBridge
+
+import numpy as np
+import math
 
 class Template(object):
 	def __init__(self, args):
@@ -89,7 +89,7 @@ class Template(object):
 			for i in range(len(axes)):
 				axes[i] = 0
 	
-		# Drift
+		# Control del drift
 		drift_tol = 0.1
 		if abs(axes[0]) <= drift_tol:
 			axes[0] = 0
@@ -126,13 +126,14 @@ class Template(object):
 			self.pub_control.publish(msg_rueda)
 
 def main():
-	rospy.init_node("bot") #creacion y registro del nodo!
+	# Nodo local del Duckiebot
+	rospy.init_node("bot") 
 	
-	# rosrun desafios_2022 Robot_interactivo.py 	
 	obj = Template('args')
 	
+	# Loop
 	rospy.spin()
 
 
-if __name__ =='__main__':
+if __name__ == '__main__':
 	main()
