@@ -3,25 +3,26 @@ Este proyecto se está realizando para el curso **CD2201 Módulo Interdisciplina
 
 Se trata de un robot que escucha instrucciones y responde mediante voz. Algunas de las interacciones adicionales que se buscan implementar son:
 
-* Rastreo de instrucciones para volver a un cierto punto.
-* Datos curiosos/chistes.
-* Baila Duckiebot, baila.
-* Palabras clave ocultas de interacción para realizar acciones secretas (*Easter Eggs*).
+* Rastrear instrucciones para volver a un cierto punto en el pasado.
+* Hacer que el Duckiebot pueda decir datos curiosos/chistes.
+* Hacer que el Duckiebot sea capaz de bailar con una instrucción.
+* Agregar palabras clave ocultas de interacción para realizar acciones secretas (*Easter Eggs*).
 
 La información sobre los avances del proyecto puede ser encontrada en la [wiki](https://github.com/maxfloresv/robot_interactivo/wiki).
 
 ### 📄 Documentación adicional:
-Para el desarrollo del proyecto, se ocupó un control de Xbox 360, con la siguiente disposición de botones:
-* `axes[0]`: Palanca izq. para el giro (3 en la imagen).
-* `axes[2]`: LT para retroceder (6 en la imagen). 
-* `axes[5]`: RT para acelerar (9 en la imagen).
+Para el desarrollo del proyecto, se ocupó un control de Xbox 360, y se usaron los siguientes botones:
+* Palanca izq. para el giro (3 en la imagen).
+* LT para retroceder (6 en la imagen). 
+* RT para acelerar (9 en la imagen).
 
-cuya referencia apunta a la función `callback_control` del [archivo principal](https://github.com/maxfloresv/robot_interactivo/blob/main/robot_interactivo.py#L81).
+La referencia al control está en la función `callback_control` del [archivo principal](https://github.com/maxfloresv/robot_interactivo/blob/main/robot_interactivo.py#L81).
 
 ![d10437ca-81da-48db-a7a0-4c1173ad42e1](https://user-images.githubusercontent.com/45862114/199054372-978e232f-ea52-479f-8155-ffc665857241.png)
 
 
 ### 💻 Comandos útiles:
-* `rosrun desafios_2022 Robot_interactivo.py`: Ejecuta el programa principal `robot_interactivo.py`.
-> ⚠️ Este comando se debe ejecutar dentro del Duckiebot.
-* `python <archivo>`: Ejecuta algún archivo dentro del PC, como `voice2text.py` o `voice2voice.py`.
+* Conexión remota del Duckiebot (para *testing* remoto): `cd duckietown` > `source vehicle_name.sh` > `./hotspot.sh on` > Conectarse a la red, cerrar y abrir otra terminal.
+* `roslaunch ros_cap duckie_core.launch` para iniciar el core de ROS.
+* `rostopic echo <nombre del tópico>` para ver información sobre un tópico de ROS (p. ej. la estructura de un mensaje).
+* `rosrun <directorio> <archivo.py>` o `python <archivo.py>` para ejecutar un archivo (p. ej. `rosrun desafios_2022 Robot_interactivo.py`).
