@@ -16,10 +16,9 @@ Para el desarrollo del proyecto, se ocupó un control de Xbox 360, y se usaron l
 * LT para retroceder (6 en la imagen). 
 * RT para acelerar (9 en la imagen).
 
-La referencia al control está en la función `callback_control` del [archivo principal](https://github.com/maxfloresv/robot_interactivo/blob/main/robot_interactivo.py#L81).
+La referencia al control está en la función `callback_control` del [archivo principal](https://github.com/maxfloresv/robot_interactivo/blob/main/duckiebot.py).
 
 ![d10437ca-81da-48db-a7a0-4c1173ad42e1](https://user-images.githubusercontent.com/45862114/199054372-978e232f-ea52-479f-8155-ffc665857241.png)
 
-
-### 💻 Comandos y definiciones útiles:
+### 📚 Comandos y definiciones útiles:
 El siguiente enlace [(click acá)](https://colab.research.google.com/drive/12NgKqmJJR6yABCUIHCZr6NJvG4wegARU) contiene una guía sobre el uso del Duckiebot.
