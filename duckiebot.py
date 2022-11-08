@@ -2,6 +2,7 @@
 
 # ROS cosas:
 import rospy 
+from time import time
 # http://wiki.ros.org/std_msgs
 from std_msgs.msg import String, Int32 
 # http://wiki.ros.org/geometry_msgs
@@ -31,6 +32,10 @@ class Template(object):
 		# Publishers:
 		self.pub_camara = rospy.Publisher("/duckiebot/camera_node/image/test", Image, queue_size=1)
 		self.pub_control = rospy.Publisher("/duckiebot/wheels_driver_node/car_cmd", Twist2DStamped)
+		self.instrucciones = []
+		self.vel_lineal = 0
+		self.vel_angular = 0
+		
 
 	def callback_camara(self, msg):
 		bridge = CvBridge()
@@ -107,7 +112,7 @@ class Template(object):
 			axes[2] *= -1
 			mensaje.v = axes[2]
 		
-		# Avance
+		# Avanceama
 		elif axes[5] == -1:
 			mensaje.v = axes[5]
 
@@ -118,12 +123,122 @@ class Template(object):
 	def callback_voz(self, msg):
 		texto = msg.data
 		
-		if texto == "avanzar":
+		# Instrucciones inversas para volver
+		inst_inversa = {
+			"avanzar": "retroceder", 
+			"retroceder": "avanzar", 
+			"izquierda": "derecha", 
+			"derecha": "izquierda",
+			"voltea": "voltea"
+		}
+		
+		avanzar = ["avanzar", "acelerar", "acelera", "avanza"]
+		if texto in avanzar:
+			self.instrucciones.append(inst_inversa["avanzar"])
+			
 			msg_rueda = Twist2DStamped()
-			msg_rueda.v = 1
+			
+			msg_rueda.v = -1
+			self.vel_lineal = -1
+			
 			msg_rueda.omega = 0
+			self.vel_angular = 0
 			
 			self.pub_control.publish(msg_rueda)
+			
+		retroceder = ["retroceder", "retrocede", "atras"]
+		if texto in retroceder:
+			self.instrucciones.append(inst_inversa["retroceder"])	
+						
+			msg_rueda = Twist2DStamped()
+			
+			msg_rueda.v = 1
+			self.vel_lineal = 1
+			
+			msg_rueda.omega = 0
+			self.vel_angular = 0
+			
+			self.pub_control.publish(msg_rueda)
+			
+		frenar = ["frenar", "frena", "para"]
+		if texto in frenar:			
+			msg_rueda = Twist2DStamped()
+			
+			msg_rueda.v = 0
+			self.vel_lineal = 0
+			
+			msg_rueda.omega = 0
+			self.vel_angular = 0
+			
+			self.pub_control.publish(msg_rueda)
+
+
+		izquierda = ["izquierda", "gira a la izquierda", "gira izquierda", "giro izquierda"]
+		
+		def ms_a_seg(tiempo):
+			return tiempo / 1000
+			
+			
+		def tiempo(angulo):
+			return 1000 * angulo / ((2 * math.pi)/1.2)
+			
+		if texto in izquierda:
+			self.instrucciones.append(inst_inversa["izquierda"])	
+						
+			msg_rueda = Twist2DStamped()
+			msg_rueda.v = self.vel_lineal
+			
+			t_actual = time()
+			t_final = t_actual
+			
+			while (t_final - t_actual) <= tiempo(math.pi / 4):
+				t_final = time()
+				msg_rueda.omega = 1 
+			
+			self.pub_control.publish(msg_rueda)	
+			
+			
+		derecha = ["derecha", "gira a la derecha", "gira derecha", "giro derecha"]			
+		if texto in derecha:
+			self.instrucciones.append(inst_inversa["derecha"])	
+						
+			msg_rueda = Twist2DStamped()
+			msg_rueda.v = self.vel_lineal
+			
+			t_actual = time()*1000
+			t_final = t_actual
+			
+			while t_final - t_actual <= tiempo(math.pi / 4):
+				t_final = time()*1000
+				
+				print("final: " + str(t_final))
+				print(t_actual)
+				print("resta: " + str(t_final-t_actual))
+				msg_rueda.omega = -1 
+			
+			self.pub_control.publish(msg_rueda)	
+			
+			
+		voltea = ["cambia el sentido"]	
+		if texto in voltea:
+			self.instrucciones.append(inst_inversa["voltea"])	
+						
+			msg_rueda = Twist2DStamped()
+			msg_rueda.v = self.vel_lineal
+			
+			t_actual = time()
+			t_final = t_actual
+			
+			while ms_a_seg(t_final - t_actual) <= tiempo(math.pi):
+				t_final = time()
+				msg_rueda.omega = 1 
+			
+			self.pub_control.publish(msg_rueda)	
+				
+				
+		#baila y vuelve
+
+		
 
 def main():
 	# Nodo local del Duckiebot
