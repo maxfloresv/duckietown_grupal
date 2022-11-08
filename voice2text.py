@@ -17,7 +17,7 @@ class Template(object):
 	def callback(self):
 		with sr.Microphone() as source:
 			print("Quack quack...") # que lo diga
-			audio = self.r.listen(source)
+			audio = self.r.listen(source, None, 3)
 			
 			try:
 				text = self.r.recognize_google(audio, language='es-ES')
