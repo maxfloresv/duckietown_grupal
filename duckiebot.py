@@ -2,7 +2,6 @@
 
 # ROS cosas:
 import rospy 
-from time import time
 # http://wiki.ros.org/std_msgs
 from std_msgs.msg import String, Int32 
 # http://wiki.ros.org/geometry_msgs
@@ -16,8 +15,12 @@ from duckietown_msgs.msg import Twist2DStamped
 import cv2 
 from cv_bridge import CvBridge
 
-import numpy as np
 import math
+import numpy as np
+from time import time
+
+# To-do: pip install polyleven en el duckiebot!!
+from polyleven import levenshtein
 
 class Template(object):
 	def __init__(self, args):
@@ -32,6 +35,8 @@ class Template(object):
 		# Publishers:
 		self.pub_camara = rospy.Publisher("/duckiebot/camera_node/image/test", Image, queue_size=1)
 		self.pub_control = rospy.Publisher("/duckiebot/wheels_driver_node/car_cmd", Twist2DStamped)
+		
+		# Extras:
 		self.instrucciones = []
 		self.vel_lineal = 0
 		self.vel_angular = 0
@@ -112,7 +117,7 @@ class Template(object):
 			axes[2] *= -1
 			mensaje.v = axes[2]
 		
-		# Avanceama
+		# Avance
 		elif axes[5] == -1:
 			mensaje.v = axes[5]
 
@@ -120,8 +125,31 @@ class Template(object):
 
 		self.pub_control.publish(mensaje)
 		
+	# max_levenshtein: str list -> int
+	# Dado un string s, calcula la minima distancia de Levenshtein
+	# entre s y todos los elementos de la lista L.
+	def min_levenshtein(s, L):
+		dist = math.inf
+		for i in range(L):
+			dist = min(dist, levenshtein(s, L[i]))
+				
+		return dist
+	
+	# tiempo: int
+	# Calcula el tiempo que le toma al duckiebot girar en un angulo
+	def tiempo(angulo):
+		# Calculado a partir de angulo = vel. angular * tiempo
+		t_vuelta = 1.2 # Vuelta de 2pi
+		return 1000 * angulo / ((2 * math.pi) / t_vuelta)
+		
 	def callback_voz(self, msg):
 		texto = msg.data
+		
+		# Mensaje a publicar en las ruedas
+		msg_rueda = Twist2DStamped()
+		
+		# Maxima diferencia entre strings para considerar la instruccion
+		MAX_DIST = 2
 		
 		# Instrucciones inversas para volver
 		inst_inversa = {
@@ -129,14 +157,15 @@ class Template(object):
 			"retroceder": "avanzar", 
 			"izquierda": "derecha", 
 			"derecha": "izquierda",
-			"voltea": "voltea"
+			"voltear": "voltear"
 		}
 		
-		avanzar = ["avanzar", "acelerar", "acelera", "avanza"]
-		if texto in avanzar:
+		# Avance:
+		avanzar = ["avanzar", "acelerar", "adelante"]
+		dist = self.min_levenshtein(texto, avanzar)
+		
+		if dist <= MAX_DIST:
 			self.instrucciones.append(inst_inversa["avanzar"])
-			
-			msg_rueda = Twist2DStamped()
 			
 			msg_rueda.v = -1
 			self.vel_lineal = -1
@@ -145,12 +174,14 @@ class Template(object):
 			self.vel_angular = 0
 			
 			self.pub_control.publish(msg_rueda)
-			
-		retroceder = ["retroceder", "retrocede", "atras"]
-		if texto in retroceder:
+			return
+		
+		# Retroceso:
+		retroceder = ["retroceder", "atras"]
+		dist = self.min_levenshtein(texto, retroceder)
+		
+		if dist <= MAX_DIST:
 			self.instrucciones.append(inst_inversa["retroceder"])	
-						
-			msg_rueda = Twist2DStamped()
 			
 			msg_rueda.v = 1
 			self.vel_lineal = 1
@@ -159,11 +190,13 @@ class Template(object):
 			self.vel_angular = 0
 			
 			self.pub_control.publish(msg_rueda)
+			return
 			
-		frenar = ["frenar", "frena", "para"]
-		if texto in frenar:			
-			msg_rueda = Twist2DStamped()
-			
+		# Frenado:
+		frenar = ["frenar", "parar"]
+		dist = self.min_levenshtein(texto, frenar)
+		
+		if dist <= MAX_DIST:		
 			msg_rueda.v = 0
 			self.vel_lineal = 0
 			
@@ -171,74 +204,66 @@ class Template(object):
 			self.vel_angular = 0
 			
 			self.pub_control.publish(msg_rueda)
-
-
-		izquierda = ["izquierda", "gira a la izquierda", "gira izquierda", "giro izquierda"]
+			return
 		
-		def ms_a_seg(tiempo):
-			return tiempo / 1000
+		# Giro izq:
+		izquierda = ["izquierda", "gira a la izquierda", "giro izquierda"]
+		dist = self.min_levenshtein(texto, izquierda)
 			
-			
-		def tiempo(angulo):
-			return 1000 * angulo / ((2 * math.pi)/1.2)
-			
-		if texto in izquierda:
+		if dist <= MAX_DIST:
 			self.instrucciones.append(inst_inversa["izquierda"])	
 						
-			msg_rueda = Twist2DStamped()
 			msg_rueda.v = self.vel_lineal
 			
-			t_actual = time()
+			t_actual = time() * 1000
 			t_final = t_actual
 			
-			while (t_final - t_actual) <= tiempo(math.pi / 4):
-				t_final = time()
-				msg_rueda.omega = 1 
+			while t_final - t_actual <= self.tiempo(math.pi / 4):
+				t_final = time() * 1000
+				msg_rueda.omega = 1
 			
 			self.pub_control.publish(msg_rueda)	
-			
-			
-		derecha = ["derecha", "gira a la derecha", "gira derecha", "giro derecha"]			
-		if texto in derecha:
+			return
+		
+		# Giro derecha:
+		derecha = ["derecha", "gira a la derecha", "gira derecha", "giro derecha"]
+		dist = self.min_levenshtein(texto, derecha)
+		
+		if dist <= MAX_DIST:
 			self.instrucciones.append(inst_inversa["derecha"])	
-						
-			msg_rueda = Twist2DStamped()
+			
 			msg_rueda.v = self.vel_lineal
 			
-			t_actual = time()*1000
+			t_actual = time() * 1000
 			t_final = t_actual
 			
-			while t_final - t_actual <= tiempo(math.pi / 4):
-				t_final = time()*1000
-				
-				print("final: " + str(t_final))
-				print(t_actual)
-				print("resta: " + str(t_final-t_actual))
+			while t_final - t_actual <= self.tiempo(math.pi / 4):
+				t_final = time() * 1000
 				msg_rueda.omega = -1 
 			
-			self.pub_control.publish(msg_rueda)	
-			
-			
-		voltea = ["cambia el sentido"]	
-		if texto in voltea:
-			self.instrucciones.append(inst_inversa["voltea"])	
+			self.pub_control.publish(msg_rueda)
+			return
+		
+		# Voltear:
+		voltear = ["voltear", "cambiar el sentido", "cambiar sentido"]
+		dist = self.min_levenshtein(texto, voltear)
+		
+		if dist <= MIN_DIST:
+			self.instrucciones.append(inst_inversa["voltear"])	
 						
-			msg_rueda = Twist2DStamped()
 			msg_rueda.v = self.vel_lineal
 			
-			t_actual = time()
+			t_actual = time() * 1000
 			t_final = t_actual
 			
-			while ms_a_seg(t_final - t_actual) <= tiempo(math.pi):
-				t_final = time()
+			while t_final - t_actual <= self.tiempo(math.pi):
+				t_final = time() * 1000
 				msg_rueda.omega = 1 
 			
-			self.pub_control.publish(msg_rueda)	
+			self.pub_control.publish(msg_rueda)
+			return
 				
-				
-		#baila y vuelve
-
-		
+		# Faltan: baila y vuelve
 
 def main():
 	# Nodo local del Duckiebot
