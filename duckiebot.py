@@ -19,9 +19,6 @@ import math
 import numpy as np
 from time import time
 
-# To-do: pip install polyleven en el duckiebot!!
-from polyleven import levenshtein
-
 class Template(object):
 	def __init__(self, args):
 		super(Template, self).__init__()
@@ -34,7 +31,7 @@ class Template(object):
 		
 		# Publishers:
 		self.pub_camara = rospy.Publisher("/duckiebot/camera_node/image/test", Image, queue_size=1)
-		self.pub_control = rospy.Publisher("/duckiebot/wheels_driver_node/car_cmd", Twist2DStamped)
+		self.pub_control = rospy.Publisher("/duckiebot/wheels_driver_node/car_cmd", Twist2DStamped, queue_size=1)
 		
 		# Extras:
 		self.instrucciones = []
@@ -90,24 +87,21 @@ class Template(object):
 
 	def callback_control(self, msg):
 		axes = list(msg.axes)
-		buttons = list(msg.buttons)
-
-		B = buttons[1]
 		
-		# Freno de emergencia
-		if B == 1:
-			for i in range(len(axes)):
-				axes[i] = 0
+		
+		mensaje = Twist2DStamped()
 	
 		# Control del drift
 		drift_tol = 0.1
 		if abs(axes[0]) <= drift_tol:
 			axes[0] = 0
 
+		
+		# Rapidez angular:
 		axes[0] *= (4 * math.pi)
+		mensaje.omega = axes[0]
 
-		mensaje = Twist2DStamped()
-
+		# Rapidez lineal:
 		# Freno por si acelera y retrocede
 		if axes[2] == -1 and axes[5] == -1:
 			mensaje.v = 0
@@ -121,23 +115,60 @@ class Template(object):
 		elif axes[5] == -1:
 			mensaje.v = axes[5]
 
-		mensaje.omega = axes[0]
+		# Freno de emergencia:
+		buttons = list(msg.buttons)
+		B = buttons[1]
+	
+		if B == 1:
+			for i in range(len(axes)):
+				mensaje.v = 0
+				mensaje.omega = 0
 
 		self.pub_control.publish(mensaje)
 	
 	# Calcula el tiempo que le toma al duckiebot girar en un angulo
-	def tiempo(angulo):
+	def tiempo(self, angulo):
 		# Calculado a partir de angulo = vel. angular * tiempo
 		t_vuelta = 1.2 # Vuelta de 2pi
 		return 1000 * angulo / ((2 * math.pi) / t_vuelta)
+		
+	# Calcula la distancia entre dos strings (ADAPTADO A Python 2.7)
+	# https://stackabuse.com/levenshtein-distance-and-text-similarity-in-python/
+	def levenshtein(self, seq1, seq2):
+		size_x = len(seq1) + 1
+		size_y = len(seq2) + 1
+		matrix = np.zeros((size_x, size_y))
+			
+		for x in range(size_x):
+			matrix[x][0] = x
+
+		for y in range(size_y):
+			matrix[0][y] = y
+				
+		for x in range(1, size_x):
+			for y in range(1, size_y):
+				if seq1[x-1] == seq2[y-1]:
+					matrix[x][y] = min(
+						matrix[x-1][y] + 1, 
+						matrix[x-1][y-1], 
+						matrix[x][y-1] + 1
+					)
+				else:
+					matrix[x][y] = min(
+						matrix[x-1][y] + 1, 
+						matrix[x-1][y-1] + 1, 
+						matrix[x][y-1] + 1
+					)
+			
+		return int(matrix[size_x - 1][size_y - 1])
 	
 	# Ejecuta una instruccion que se haya pedido, devolviendo False
 	# si NO coincide y True si es la indicada
-	def ejecutar_instruccion(texto, instruccion, v_lin, v_ang, t):
+	def ejecutar_instruccion(self, texto, instruccion, v_lin, v_ang, t):
 		# Maxima diferencia entre strings para considerar la instruccion
 		MAX_DIST = 2
 
-		distancia = levenshtein(texto, instruccion)
+		distancia = self.levenshtein(texto, instruccion)
 
 		if distancia <= MAX_DIST:
 			msg_rueda = Twist2DStamped()
@@ -145,14 +176,20 @@ class Template(object):
 
 			self.v_lineal = v_lin
 			self.v_angular = v_ang
+	
+			msg_rueda.v = v_lin
+			msg_rueda.omega = v_ang	
 
 			t_actual = time()
 
 			# Ejecutar durante t segundos
 			while time() - t_actual <= t:
-				msg_rueda.v = v_lin
-				msg_rueda.omega = v_ang
-
+				self.pub_control.publish(msg_rueda)
+				
+			# Pasados los t segundos, que frene absolutamente
+			msg_rueda.v = 0
+			msg_rueda.omega = 0
+			
 			self.pub_control.publish(msg_rueda)
 
 			return True
