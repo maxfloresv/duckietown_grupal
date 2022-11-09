@@ -20,5 +20,10 @@ La referencia al control está en la función `callback_control` del [archivo pr
 
 ![d10437ca-81da-48db-a7a0-4c1173ad42e1](https://user-images.githubusercontent.com/45862114/199054372-978e232f-ea52-479f-8155-ffc665857241.png)
 
+#### 🆔 Identificación de acciones
+Cada acción tiene un número identificador dentro del código. 
+
+Avanzar: 0. Retroceder: 1. Giro a la izquierda: 2. Giro a la derecha: 3. Frenar: 4. Voltear: 5.
+
 ### 📚 Comandos y definiciones útiles:
 El siguiente enlace [(click acá)](https://colab.research.google.com/drive/12NgKqmJJR6yABCUIHCZr6NJvG4wegARU) contiene una guía sobre el uso del Duckiebot.
