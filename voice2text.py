@@ -9,12 +9,23 @@ class Template(object):
 		self.args = args
 		
 		# Publisher de voz
-		self.pub = rospy.Publisher("/duckiebot/voz/v2t", String, queue_size=1)
+		# latch=True para publicar mensajes perdidos
+		# https://stackoverflow.com/a/60661094
+		self.pub = rospy.Publisher("/duckiebot/voz/v2t", String, queue_size=1, latch=True)
 
 		# Programa de voz
 		self.r = sr.Recognizer()
+		
+		self.published = False
 
 	def callback(self):
+		if not self.published:
+			msg = String()
+			msg.data = "izquierda"
+			self.pub.publish(msg)
+			
+		self.published = True
+		"""
 		with sr.Microphone() as source:
 			print("Quack quack...") # que lo diga
 			audio = self.r.listen(source, None, 3)
@@ -27,7 +38,7 @@ class Template(object):
 				self.pub.publish(msg)
 				
 			except Exception as e:
-				print("No quackche", str(e))
+				print("No quackche", str(e))"""
 		
 def main():
 	# Nodo local del PC
