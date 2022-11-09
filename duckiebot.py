@@ -125,7 +125,6 @@ class Template(object):
 
 		self.pub_control.publish(mensaje)
 		
-	# max_levenshtein: str list -> int
 	# Dado un string s, calcula la minima distancia de Levenshtein
 	# entre s y todos los elementos de la lista L.
 	def min_levenshtein(s, L):
@@ -135,200 +134,77 @@ class Template(object):
 				
 		return dist
 	
-	# tiempo: int
 	# Calcula el tiempo que le toma al duckiebot girar en un angulo
 	def tiempo(angulo):
 		# Calculado a partir de angulo = vel. angular * tiempo
 		t_vuelta = 1.2 # Vuelta de 2pi
 		return 1000 * angulo / ((2 * math.pi) / t_vuelta)
+	
+	# Ejecuta una instruccion que se haya pedido, devolviendo False
+	# si NO coincide y True si es la indicada
+	def ejecutar_instruccion(texto, instruccion, v_lin, v_ang, t):
+		# Maxima diferencia entre strings para considerar la instruccion
+		MAX_DIST = 2
+
+		distancia = self.min_levenshtein(texto, instruccion)
+
+		if distancia <= MAX_DIST:
+			msg_rueda = Twist2DStamped()
+			# TBA: self.instrucciones.append(inst_inversa(L[0]))
+
+			self.v_lineal = v_lin
+			self.v_angular = v_ang
+
+			t_actual = time()
+
+			# Ejecutar durante t segundos
+			while time() - t_actual <= t:
+				msg_rueda.v = v_lin
+				msg_rueda.omega = v_ang
+
+			self.pub_control.publish(msg_rueda)
+
+			return True
+
+		return False
 		
 	def callback_voz(self, msg):
 		texto = msg.data
 		
-		# Mensaje a publicar en las ruedas
-		msg_rueda = Twist2DStamped()
+		# Keywords: El primer elemento SIEMPRE debe ser la palabra principal
+		avanzar = ["avanzar", "acelerar", "adelante"]
+		retroceder = ["retroceder", "atras"]
+		izquierda = ["izquierda", "gira a la izquierda", "giro izquierda"]
+		derecha = ["derecha", "gira a la derecha", "gira derecha", "giro derecha"]
+		frenar = ["frenar", "parar"]
+		voltear = ["voltear", "cambia el sentido", "cambiar sentido"]
+		instrucciones = [avanzar, retroceder, izquierda, derecha, frenar, voltear]
 		
-		# Maxima diferencia entre strings para considerar la instruccion
-		MAX_DIST = 2
-		
-		# Instrucciones inversas para volver
-		inst_inversa = {
-			"avanzar": "retroceder", 
-			"retroceder": "avanzar", 
-			"izquierda": "derecha", 
-			"derecha": "izquierda",
-			"voltear": "voltear"
+		# Identificacion de cada accion. 
+		# Tiene la forma [id, vel_lineal, vel_angular, tiempo]
+		ID = {
+			"avanzar": [0, -1, 0, 5],
+			"retroceder": [1, 1, 0, 5],
+			"izquierda": [2, self.vel_lineal, 1, self.tiempo(math.pi / 4)],
+			"derecha": [3, self.vel_lineal, -1, self.tiempo(math.pi / 4)],
+			"frenar": [4, 0, 0, 0],
+			"voltear": [5, self.vel_lineal, 1, self.tiempo(math.pi)]
 		}
 		
-		# Avance:
-		avanzar = ["avanzar", "acelerar", "adelante"]
-		dist = self.min_levenshtein(texto, avanzar)
-		
-		if dist <= MAX_DIST:
-			self.instrucciones.append(inst_inversa["avanzar"])
+		for inst in instrucciones:
+			# inst[0] siempre es una key de ID (verbo)
+			arr_id = ID[inst[0]]
 			
-			msg_rueda.v = -1
-			self.vel_lineal = -1
+			# Extraemos las velocidades y el tiempo de ejecucion
+			v_lin = arr_id[1]
+			v_ang = arr_id[2]
+			tiempo = arr_id[3]
 			
-			msg_rueda.omega = 0
-			self.vel_angular = 0
-			
-			self.pub_control.publish(msg_rueda)
-			return
-		
-		# Retroceso:
-		retroceder = ["retroceder", "atras"]
-		dist = self.min_levenshtein(texto, retroceder)
-		
-		if dist <= MAX_DIST:
-			self.instrucciones.append(inst_inversa["retroceder"])	
-			
-			msg_rueda.v = 1
-			self.vel_lineal = 1
-			
-			msg_rueda.omega = 0
-			self.vel_angular = 0
-			
-			self.pub_control.publish(msg_rueda)
-			return
-			
-		# Frenado:
-		frenar = ["frenar", "parar"]
-		dist = self.min_levenshtein(texto, frenar)
-		
-		if dist <= MAX_DIST:		
-			msg_rueda.v = 0
-			self.vel_lineal = 0
-			
-			msg_rueda.omega = 0
-			self.vel_angular = 0
-			
-			self.pub_control.publish(msg_rueda)
-			return
-		
-		# Giro izq:
-		izquierda = ["izquierda", "gira a la izquierda", "giro izquierda"]
-		dist = self.min_levenshtein(texto, izquierda)
-			
-		if dist <= MAX_DIST:
-			self.instrucciones.append(inst_inversa["izquierda"])	
-						
-			msg_rueda.v = self.vel_lineal
-			
-			t_actual = time() * 1000
-			t_final = t_actual
-			
-			while t_final - t_actual <= self.tiempo(math.pi / 4):
-				t_final = time() * 1000
-				msg_rueda.omega = 1
-			
-			self.pub_control.publish(msg_rueda)	
-			return
-		
-		# Giro derecha:
-		derecha = ["derecha", "gira a la derecha", "gira derecha", "giro derecha"]
-		dist = self.min_levenshtein(texto, derecha)
-		
-		if dist <= MAX_DIST:
-			self.instrucciones.append(inst_inversa["derecha"])	
-			
-			msg_rueda.v = self.vel_lineal
-			
-			t_actual = time() * 1000
-			t_final = t_actual
-			
-			while t_final - t_actual <= self.tiempo(math.pi / 4):
-				t_final = time() * 1000
-				msg_rueda.omega = -1 
-			
-			self.pub_control.publish(msg_rueda)
-			return
-		
-		# Voltear:
-		voltear = ["voltear", "cambiar el sentido", "cambiar sentido"]
-		dist = self.min_levenshtein(texto, voltear)
-		
-		if dist <= MAX_DIST:
-			self.instrucciones.append(inst_inversa["voltear"])	
-						
-			msg_rueda.v = self.vel_lineal
-			
-			t_actual = time() * 1000
-			t_final = t_actual
-			
-			while t_final - t_actual <= self.tiempo(math.pi):
-				t_final = time() * 1000
-				msg_rueda.omega = 1 
-			
-			self.pub_control.publish(msg_rueda)
-			return
-				
-		# Volver:
-		volver = ["volver", "vuelve", "regresar"]
-		dist = self.min_levenshtein(texto, volver)
-		
-		if dist <= MIN_DIST:
-			for inst in self.instrucciones:
-				if inst == "avanzar":
-					msg_rueda.v = -1
-					self.vel_lineal = -1
-					
-					msg_rueda.omega = 0
-					self.vel_angular = 0
-				elif inst == "retroceder":
-					msg_rueda.v = 1
-					self.vel_lineal = 1
-					
-					msg_rueda.omega = 0
-					self.vel_angular = 0
-				elif inst == "izquierda":
-					t_actual = time() * 1000
-					t_final = t_actual
-			
-					while t_final - t_actual <= self.tiempo(math.pi / 4):
-						t_final = time() * 1000
-						msg_rueda.omega = 1 
-					
-				elif inst == "derecha":
-					
-				elif inst == "voltear":
-				
-			# Limpiamos las instrucciones
-			self.instrucciones = []
-			
-			return
-		
-		"""
-		def ejecutar_instruccion(s, L, v_lin, v_ang, t):
-			ACCIONES = { 
-				"avanzar": 1, 
-				"retroceder": -1, 
-				"izquierda": 2, 
-				"derecha": -2, 
-				"volver": 0 
-			}
-			
-			# Maxima diferencia entre strings para considerar la instruccion
-			MAX_DIST = 2
-			
-			distancia = self.min_levenshtein(s, L)
-			
-			if distancia <= MAX_DIST:
-				msg_rueda = Twist2DStamped()
-				self.instrucciones.append(inst_inversa(L[0]))
-				
-				t_actual = time()
-
-				self.v_lineal = v_lin
-				self.v_angular = v_ang
-				
-				while time() - t_actual <= t:
-					msg_rueda.v = v_lin
-					msg_rueda.omega = v_ang
-				
-				self.pub_control.publish(msg_rueda)
-		"""
-		# Faltan: baila
+			# Si la instruccion se ejecuta, paramos (porque era la indicada)
+			if self.ejecutar_instruccion(texto, inst, v_lin, v_ang, tiempo):
+				return
+	
+		# TO-DO: Volver, y baile [antes del 15/11]
 
 def main():
 	# Nodo local del Duckiebot
