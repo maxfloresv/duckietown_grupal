@@ -124,15 +124,6 @@ class Template(object):
 		mensaje.omega = axes[0]
 
 		self.pub_control.publish(mensaje)
-		
-	# Dado un string s, calcula la minima distancia de Levenshtein
-	# entre s y todos los elementos de la lista L.
-	def min_levenshtein(s, L):
-		dist = math.inf
-		for i in range(L):
-			dist = min(dist, levenshtein(s, L[i]))
-				
-		return dist
 	
 	# Calcula el tiempo que le toma al duckiebot girar en un angulo
 	def tiempo(angulo):
@@ -146,7 +137,7 @@ class Template(object):
 		# Maxima diferencia entre strings para considerar la instruccion
 		MAX_DIST = 2
 
-		distancia = self.min_levenshtein(texto, instruccion)
+		distancia = levenshtein(texto, instruccion)
 
 		if distancia <= MAX_DIST:
 			msg_rueda = Twist2DStamped()
@@ -171,34 +162,24 @@ class Template(object):
 	def callback_voz(self, msg):
 		texto = msg.data
 		
-		# Keywords: El primer elemento SIEMPRE debe ser la palabra principal
-		avanzar = ["avanzar", "acelerar", "adelante"]
-		retroceder = ["retroceder", "atras"]
-		izquierda = ["izquierda", "gira a la izquierda", "giro izquierda"]
-		derecha = ["derecha", "gira a la derecha", "gira derecha", "giro derecha"]
-		frenar = ["frenar", "parar"]
-		voltear = ["voltear", "cambia el sentido", "cambiar sentido"]
-		instrucciones = [avanzar, retroceder, izquierda, derecha, frenar, voltear]
+		instrucciones = ["avanzar", "retroceder", "izquierda", "derecha", "frenar", "voltear"]
 		
-		# Identificacion de cada accion. 
-		# Tiene la forma [id, vel_lineal, vel_angular, tiempo]
-		ID = {
-			"avanzar": [0, -1, 0, 5],
-			"retroceder": [1, 1, 0, 5],
-			"izquierda": [2, self.vel_lineal, 1, self.tiempo(math.pi / 4)],
-			"derecha": [3, self.vel_lineal, -1, self.tiempo(math.pi / 4)],
-			"frenar": [4, 0, 0, 0],
-			"voltear": [5, self.vel_lineal, 1, self.tiempo(math.pi)]
+		# Propiedades de cada accion 
+		# Tiene la forma [vel_lineal, vel_angular, tiempo]
+		propiedades = {
+			"avanzar": [-1, self.vel_angular, 5],
+			"retroceder": [1, self.vel_angular, 5],
+			"izquierda": [self.vel_lineal, 1, self.tiempo(math.pi / 4)],
+			"derecha": [self.vel_lineal, -1, self.tiempo(math.pi / 4)],
+			"frenar": [0, 0, 0],
+			"voltear": [self.vel_lineal, 1, self.tiempo(math.pi)]
 		}
 		
 		for inst in instrucciones:
-			# inst[0] siempre es una key de ID (verbo)
-			arr_id = ID[inst[0]]
+			prop_inst = propiedades[inst]
 			
 			# Extraemos las velocidades y el tiempo de ejecucion
-			v_lin = arr_id[1]
-			v_ang = arr_id[2]
-			tiempo = arr_id[3]
+			v_lin, v_ang, tiempo = prop_inst
 			
 			# Si la instruccion se ejecuta, paramos (porque era la indicada)
 			if self.ejecutar_instruccion(texto, inst, v_lin, v_ang, tiempo):
