@@ -248,7 +248,7 @@ class Template(object):
 		voltear = ["voltear", "cambiar el sentido", "cambiar sentido"]
 		dist = self.min_levenshtein(texto, voltear)
 		
-		if dist <= MIN_DIST:
+		if dist <= MAX_DIST:
 			self.instrucciones.append(inst_inversa["voltear"])	
 						
 			msg_rueda.v = self.vel_lineal
@@ -263,7 +263,72 @@ class Template(object):
 			self.pub_control.publish(msg_rueda)
 			return
 				
-		# Faltan: baila y vuelve
+		# Volver:
+		volver = ["volver", "vuelve", "regresar"]
+		dist = self.min_levenshtein(texto, volver)
+		
+		if dist <= MIN_DIST:
+			for inst in self.instrucciones:
+				if inst == "avanzar":
+					msg_rueda.v = -1
+					self.vel_lineal = -1
+					
+					msg_rueda.omega = 0
+					self.vel_angular = 0
+				elif inst == "retroceder":
+					msg_rueda.v = 1
+					self.vel_lineal = 1
+					
+					msg_rueda.omega = 0
+					self.vel_angular = 0
+				elif inst == "izquierda":
+					t_actual = time() * 1000
+					t_final = t_actual
+			
+					while t_final - t_actual <= self.tiempo(math.pi / 4):
+						t_final = time() * 1000
+						msg_rueda.omega = 1 
+					
+				elif inst == "derecha":
+					
+				elif inst == "voltear":
+				
+			# Limpiamos las instrucciones
+			self.instrucciones = []
+			
+			return
+		
+		"""
+		def ejecutar_instruccion(s, L, v_lin, v_ang, t):
+			ACCIONES = { 
+				"avanzar": 1, 
+				"retroceder": -1, 
+				"izquierda": 2, 
+				"derecha": -2, 
+				"volver": 0 
+			}
+			
+			# Maxima diferencia entre strings para considerar la instruccion
+			MAX_DIST = 2
+			
+			distancia = self.min_levenshtein(s, L)
+			
+			if distancia <= MAX_DIST:
+				msg_rueda = Twist2DStamped()
+				self.instrucciones.append(inst_inversa(L[0]))
+				
+				t_actual = time()
+
+				self.v_lineal = v_lin
+				self.v_angular = v_ang
+				
+				while time() - t_actual <= t:
+					msg_rueda.v = v_lin
+					msg_rueda.omega = v_ang
+				
+				self.pub_control.publish(msg_rueda)
+		"""
+		# Faltan: baila
 
 def main():
 	# Nodo local del Duckiebot
