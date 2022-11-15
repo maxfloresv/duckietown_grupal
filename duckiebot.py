@@ -37,6 +37,7 @@ class Template(object):
 		self.instrucciones = []
 		self.vel_lineal = 0
 		self.vel_angular = 0
+		self.zero = 0
 		
 
 	def callback_camara(self, msg):
@@ -87,21 +88,24 @@ class Template(object):
 
 	def callback_control(self, msg):
 		axes = list(msg.axes)
+		buttons = list(msg.buttons)
+
+		B = buttons[1]
 		
-		
-		mensaje = Twist2DStamped()
+		# Freno de emergencia
+		if B == 1:
+			for i in range(len(axes)):
+				axes[i] = 0
 	
 		# Control del drift
 		drift_tol = 0.1
 		if abs(axes[0]) <= drift_tol:
 			axes[0] = 0
 
-		
-		# Rapidez angular:
 		axes[0] *= (4 * math.pi)
-		mensaje.omega = axes[0]
 
-		# Rapidez lineal:
+		mensaje = Twist2DStamped()
+
 		# Freno por si acelera y retrocede
 		if axes[2] == -1 and axes[5] == -1:
 			mensaje.v = 0
@@ -115,14 +119,7 @@ class Template(object):
 		elif axes[5] == -1:
 			mensaje.v = axes[5]
 
-		# Freno de emergencia:
-		buttons = list(msg.buttons)
-		B = buttons[1]
-	
-		if B == 1:
-			for i in range(len(axes)):
-				mensaje.v = 0
-				mensaje.omega = 0
+		mensaje.omega = axes[0]	
 
 		self.pub_control.publish(mensaje)
 	
@@ -130,7 +127,7 @@ class Template(object):
 	def tiempo(self, angulo):
 		# Calculado a partir de angulo = vel. angular * tiempo
 		t_vuelta = 1.2 # Vuelta de 2pi
-		return 1000 * angulo / ((2 * math.pi) / t_vuelta)
+		return angulo / ((2 * math.pi) / t_vuelta)
 		
 	# Calcula la distancia entre dos strings (ADAPTADO A Python 2.7)
 	# https://stackabuse.com/levenshtein-distance-and-text-similarity-in-python/
@@ -204,11 +201,11 @@ class Template(object):
 		# Propiedades de cada accion 
 		# Tiene la forma [vel_lineal, vel_angular, tiempo]
 		propiedades = {
-			"avanzar": [-1, self.vel_angular, 5],
-			"retroceder": [1, self.vel_angular, 5],
-			"izquierda": [self.vel_lineal, 1, self.tiempo(math.pi / 4)],
-			"derecha": [self.vel_lineal, -1, self.tiempo(math.pi / 4)],
-			"frenar": [0, 0, 0],
+			"avanzar": [-1, self.vel_angular, 15],
+			"retroceder": [1, self.vel_angular, 15],
+			"izquierda": [self.vel_lineal, 21, self.tiempo(math.pi / 2)],
+			"derecha": [self.vel_lineal, -21, self.tiempo(math.pi / 2)],
+			"frenar": [self.zero, self.zero, 5],
 			"voltear": [self.vel_lineal, 1, self.tiempo(math.pi)]
 		}
 		
