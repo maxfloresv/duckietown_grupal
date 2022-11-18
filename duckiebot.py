@@ -1,18 +1,3 @@
-#!/usr/bin/env python
-
-# ROS cosas:
-import rospy 
-# http://wiki.ros.org/std_msgs
-from std_msgs.msg import String, Int32 
-# http://wiki.ros.org/geometry_msgs
-from geometry_msgs.msg import Twist
-# http://wiki.ros.org/sensor_msgs
-from sensor_msgs.msg import Image, Joy
-# Se pueden ver dentro del Duckiebot
-from duckietown_msgs.msg import Twist2DStamped
-
-# Procesamiento de imgs con ML:
-import cv2 
 from cv_bridge import CvBridge
 
 import math
@@ -20,6 +5,12 @@ import numpy as np
 from time import time
 
 class Template(object):
+	# Calcula el tiempo que le toma al duckiebot girar en un angulo
+	def tiempo(self, angulo):
+		# Calculado a partir de angulo = vel. angular * tiempo
+		t_vuelta = 1.2 # Vuelta de 2pi
+		return angulo / ((2 * math.pi) / t_vuelta)
+		
 	def __init__(self, args):
 		super(Template, self).__init__()
 		self.args = args
@@ -38,7 +29,29 @@ class Template(object):
 		self.vel_lineal = 0
 		self.vel_angular = 0
 		self.zero = 0
-		
+		self.frenar = False
+		self.inst_inversa = {
+			"avanzar": "retroceder",
+			"retroceder": "avanzar",
+			"izquierda": "derecha",
+			"derecha": "izquierda",
+			"voltear": "voltear_d" # voltear_d = voltear inversa
+		}
+		self.propiedades = {
+			"avanzar": [-5, self.vel_angular, 15],
+			"retroceder": [5, self.vel_angular, 5],
+			"izquierda": [self.vel_lineal, 10, self.tiempo(math.pi / 2)],
+			"derecha": [self.vel_lineal, -10, self.tiempo(math.pi / 2)],
+			"frenar": [-532, 0, -1],
+			"voltear": [self.vel_lineal, 10, self.tiempo(math.pi)],
+			"voltear_d": [self.vel_lineal, -10, self.tiempo(math.pi)]
+		}
+
+		"""otro dia
+		while True:
+		if time() - t_ejec >= 60 * 30:
+			self.instrucciones = []
+			t_ejec = time()		"""
 
 	def callback_camara(self, msg):
 		bridge = CvBridge()
@@ -122,12 +135,6 @@ class Template(object):
 		mensaje.omega = axes[0]	
 
 		self.pub_control.publish(mensaje)
-	
-	# Calcula el tiempo que le toma al duckiebot girar en un angulo
-	def tiempo(self, angulo):
-		# Calculado a partir de angulo = vel. angular * tiempo
-		t_vuelta = 1.2 # Vuelta de 2pi
-		return angulo / ((2 * math.pi) / t_vuelta)
 		
 	# Calcula la distancia entre dos strings (ADAPTADO A Python 2.7)
 	# https://stackabuse.com/levenshtein-distance-and-text-similarity-in-python/
@@ -169,7 +176,14 @@ class Template(object):
 
 		if distancia <= MAX_DIST:
 			msg_rueda = Twist2DStamped()
-			# TBA: self.instrucciones.append(inst_inversa(L[0]))
+			self.frenar = False
+	
+			# Frena
+			if v_lin == -532:
+				self.frenar = True
+				
+			else:
+				self.instrucciones.append(self.inst_inversa[instruccion])
 
 			self.v_lineal = v_lin
 			self.v_angular = v_ang
@@ -181,7 +195,19 @@ class Template(object):
 
 			# Ejecutar durante t segundos
 			while time() - t_actual <= t:
-				self.pub_control.publish(msg_rueda)
+				print(self.frenar)
+				if self.frenar == True:
+					print("frenafrena")
+					msg_rueda.v = 0
+					msg_rueda.omega = 0
+					
+					self.v_lineal = 0
+					self.v_angular = 0
+					
+					self.pub_control.publish(msg_rueda)
+					break
+				else:
+					self.pub_control.publish(msg_rueda)
 				
 			# Pasados los t segundos, que frene absolutamente
 			msg_rueda.v = 0
@@ -200,14 +226,7 @@ class Template(object):
 		
 		# Propiedades de cada accion 
 		# Tiene la forma [vel_lineal, vel_angular, tiempo]
-		propiedades = {
-			"avanzar": [-1, self.vel_angular, 15],
-			"retroceder": [1, self.vel_angular, 15],
-			"izquierda": [self.vel_lineal, 21, self.tiempo(math.pi / 2)],
-			"derecha": [self.vel_lineal, -21, self.tiempo(math.pi / 2)],
-			"frenar": [self.zero, self.zero, 5],
-			"voltear": [self.vel_lineal, 1, self.tiempo(math.pi)]
-		}
+		propiedades = self.propiedades
 		
 		for inst in instrucciones:
 			prop_inst = propiedades[inst]
@@ -218,8 +237,73 @@ class Template(object):
 			# Si la instruccion se ejecuta, paramos (porque era la indicada)
 			if self.ejecutar_instruccion(texto, inst, v_lin, v_ang, tiempo):
 				return
+				
+		MAX_DIST = 2
+		bailar_dist = self.levenshtein(texto, "bailar")
+		if bailar_dist <= MAX_DIST:
+			msg_rueda = Twist2DStamped()
+			
+			instrucciones = {
+				1: [0, -10, self.tiempo(math.pi / 4)],
+				2: [0, 10, self.tiempo(math.pi / 2)],
+				3: [0, -10, self.tiempo(math.pi / 2)],
+				4: [0, 10, self.tiempo(math.pi / 2)],
+				5: [0, -10, self.tiempo(math.pi / 4)],
+				6: [10, 0, 0.5],
+				7: [-10, 0, 1],
+				8: [10, 0, 1],
+				9: [-10, 0, 0.5]				
+			}
+			
+			for i in range(1, 10):
+				v_lin, v_ang, t = instrucciones[i]
+					
+				msg_rueda.omega = v_ang
+				msg_rueda.v = v_lin
+				
+				t_actual = time()
+
+				# Ejecutar durante t segundos
+				while time() - t_actual <= t:
+					if self.frenar == True:
+						msg_rueda.v = 0
+						msg_rueda.omega = 0
+						
+						self.v_lineal = 0
+						self.v_angular = 0
+						
+						self.pub_control.publish(msg_rueda)
+						break
+					else:
+						self.pub_control.publish(msg_rueda)
+				
+				msg_rueda.v = 0
+				msg_rueda.omega = 0	
+				
+				self.pub_control.publish(msg_rueda)
+			
+			return
 	
-		# TO-DO: Volver, y baile [antes del 15/11]
+		volver_dist = self.levenshtein(texto, "volver")
+		vuelve_dist = self.levenshtein(texto, "vuelve")
+		
+		dist = min(volver_dist, vuelve_dist)
+		
+		if dist <= MAX_DIST:
+			for i in range(len(self.instrucciones)):
+				largo = len(self.instrucciones)
+				
+				inst = self.instrucciones[largo - 1 - i]
+				
+				v_lin, v_ang, t = self.propiedades[inst]
+				
+				self.ejecutar_instruccion(inst, inst, v_lin, v_ang, t)
+				
+			return
+		
+		borrar_dist = self.levenshtein(texto, "borrar")
+		if borrar_dist <= MAX_DIST:
+			self.instrucciones = []
 
 def main():
 	# Nodo local del Duckiebot
