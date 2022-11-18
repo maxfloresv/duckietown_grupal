@@ -185,6 +185,7 @@ class Template(object):
         return False
 
     def callback_voz(self, msg):
+        global freno
         texto = msg.data
 
         instrucciones = ["avanzar", "retroceder", "izquierda", "derecha", "frenar", "voltear"]
