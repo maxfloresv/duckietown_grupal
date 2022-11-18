@@ -1,3 +1,18 @@
+#!/usr/bin/env python
+
+# ROS cosas:
+import rospy 
+# http://wiki.ros.org/std_msgs
+from std_msgs.msg import String, Int32 
+# http://wiki.ros.org/geometry_msgs
+from geometry_msgs.msg import Twist
+# http://wiki.ros.org/sensor_msgs
+from sensor_msgs.msg import Image, Joy
+# Se pueden ver dentro del Duckiebot
+from duckietown_msgs.msg import Twist2DStamped
+
+# Procesamiento de imgs con ML:
+import cv2
 from cv_bridge import CvBridge
 
 import math
