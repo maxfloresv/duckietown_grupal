@@ -37,7 +37,7 @@ class Template(object):
             run = False
             return
 
-        # Ejecutar el microfono
+        # Ejecutar el microfono solo si no esta activo (evita lag)
         if A == 1 and not active:
             active = True
             with sr.Microphone() as source:
