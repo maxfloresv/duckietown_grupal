@@ -16,12 +16,12 @@ class Template(object):
 		self.args = args
 
 		# Publisher de voz
-		# latch=True para publicar mensajes perdidos
-		# https://stackoverflow.com/a/60661094
-		self.pub = rospy.Publisher("/duckiebot/voz/v2t", String, queue_size=1, latch=True)
+		self.pub_voz = rospy.Publisher("/duckiebot/voz/v2t", String, queue_size=10)
+		self.pub_tiempo = rospy.Publisher("/duckiebot/voz/tiempo", String, queue_size=1)
 
 		# Subscribers
 		rospy.Subscriber("/duckiebot/joy", Joy, self.callback_control)
+		rospy.Subscriber("/duckiebot/voz/publicar_msg", String, self.callback_req)
 
 		# Programa de voz
 		self.r = sr.Recognizer()
@@ -29,7 +29,7 @@ class Template(object):
 		self.A = 0
 		self.X = 0
 
-	def callback(self):
+	def callback(self, auto=False):
 		# Modifico los valores globales
 		global run, active
 
@@ -38,7 +38,7 @@ class Template(object):
 		    return
 
 		# Ejecutar el microfono solo si no esta activo (evita lag)
-		if self.A == 1 and not active:
+		if (self.A == 1 and not active) or auto:
 			active = True
 			with sr.Microphone() as source:
 				print("Quack quack...")  # que lo diga
@@ -49,7 +49,13 @@ class Template(object):
 					print("Lo quack dijiste fue:", str(text))
 					msg = String()
 					msg.data = str(text)
-					self.pub.publish(msg)
+					
+					# Si se llama desde el programa, es tiempo (en segundos)
+					if auto:
+						self.pub_tiempo.publish(msg)
+					# Sino, es probablemente una instruccion
+					else:
+						self.pub_voz.publish(msg)
 				except Exception as e:
 					print("No quackche", str(e))
 
@@ -60,6 +66,9 @@ class Template(object):
 
 		self.A = buttons[0]
 		self.X = buttons[2]
+		
+	def callback_req(self, msg):
+		self.callback(True)
 		
 
 def main():
