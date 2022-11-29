@@ -12,118 +12,80 @@ from sensor_msgs.msg import Image, Joy
 from duckietown_msgs.msg import Twist2DStamped
 
 # Procesamiento de imgs con ML:
-import cv2
+import cv2 
 from cv_bridge import CvBridge
 
 import math
 import numpy as np
-from time import time
+from time import time, sleep
+
+import pyttsx3
+
+eng = pyttsx3.init()
+
+# Propiedades de voz
+eng.setProperty('voice', 'spanish-latin-am')
+eng.setProperty('volume', 1.0)
+
+def crearTextoVoz(string):
+	# Hay un delay; las primeras 5 letras nunca las verbaliza
+	return "aaaaa" + string
+	
+def decir(string):
+	eng.say(crearTextoVoz(string))
+	eng.runAndWait()
+
+decir("Quack quack!!!!")
 
 class Template(object):
 	# Calcula el tiempo que le toma al duckiebot girar en un angulo
 	def tiempo(self, angulo):
 		# Calculado a partir de angulo = vel. angular * tiempo
-		t_vuelta = 1.2 # Vuelta de 2pi
-		return angulo / ((2 * math.pi) / t_vuelta)
+		t_vuelta = 1.5 # Vuelta de 2pi
+		# Velocidad angular
+		omega_real = (2 * math.pi) / t_vuelta
+		# theta = omega*t
+		return angulo / omega_real
 		
 	def __init__(self, args):
 		super(Template, self).__init__()
 		self.args = args
 		
 		# Subscribers:
-		rospy.Subscriber("/duckiebot/camera_node/image/raw", Image, self.callback_camara)
 		rospy.Subscriber("/duckiebot/joy", Joy, self.callback_control)
 		rospy.Subscriber("/duckiebot/voz/v2t", String, self.callback_voz)
+		rospy.Subscriber("/duckiebot/voz/tiempo", String, self.callback_tiempo)
 		
 		# Publishers:
 		self.pub_camara = rospy.Publisher("/duckiebot/camera_node/image/test", Image, queue_size=1)
 		self.pub_control = rospy.Publisher("/duckiebot/wheels_driver_node/car_cmd", Twist2DStamped, queue_size=1)
+		self.pub_voz = rospy.Publisher("/duckiebot/voz/publicar_msg", String, queue_size=1)
 		
 		# Extras:
 		self.instrucciones = []
 		self.vel_lineal = 0
 		self.vel_angular = 0
-		self.zero = 0
-		self.frenar = False
+		self.t_recuperado = 0
+		self.valid = False
 		self.inst_inversa = {
 			"avanzar": "retroceder",
 			"retroceder": "avanzar",
 			"izquierda": "derecha",
 			"derecha": "izquierda",
-			"voltear": "voltear_d" # voltear_d = voltear inversa
+			"girar": "girar_d" # voltear_d = voltear inversa
 		}
 		self.propiedades = {
-			"avanzar": [-5, self.vel_angular, 15],
-			"retroceder": [5, self.vel_angular, 5],
-			"izquierda": [self.vel_lineal, 10, self.tiempo(math.pi / 2)],
-			"derecha": [self.vel_lineal, -10, self.tiempo(math.pi / 2)],
-			"frenar": [-532, 0, -1],
-			"voltear": [self.vel_lineal, 10, self.tiempo(math.pi)],
-			"voltear_d": [self.vel_lineal, -10, self.tiempo(math.pi)]
+			"avanzar": [-5, 0, 3],
+			"retroceder": [5, 0, 3],
+			"izquierda": [0, 10, self.tiempo(math.pi / 2)],
+			"derecha": [0, -10, self.tiempo(math.pi / 2)],
+			"girar": [0, 10, self.tiempo(math.pi)],
+			"girar_d": [0, -10, self.tiempo(math.pi)]
 		}
-
-		"""otro dia
-		while True:
-		if time() - t_ejec >= 60 * 30:
-			self.instrucciones = []
-			t_ejec = time()		"""
-
-	def callback_camara(self, msg):
-		bridge = CvBridge()
-		image = bridge.imgmsg_to_cv2(msg, "bgr8")
 		
-		image_out = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-		
-		lower_limit = np.array([25, 130, 130])
-		upper_limit = np.array([35, 255, 255])
-
-		mask = cv2.inRange(image_out, lower_limit, upper_limit)
-
-		# Refinando la imagen
-		kernel = np.ones((3, 3), np.uint8)
-		img_out = cv2.erode(mask, kernel, iterations=1)
-		img_out = cv2.dilate(img_out, kernel, iterations=3)
-
-		img_masked = cv2.bitwise_and(image, image, mask=img_out)
-
-		# Creando el contorno
-		_, contours, hierarchy = cv2.findContours(img_out, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-		min_area = 5
-
-		for val in contours:
-			x, y, w, h = cv2.boundingRect(val)
-			if w*h > min_area:
-				cv2.rectangle(image, (x+w, y+h), (x,y), (0, 0, 0), 2)
-				d_r = 3.5
-				f = 101.8
-				p = h
-				
-				D_r = (d_r * f)/p
-
-				min_dist = 10
-				max_dist = 50
-				
-				if D_r <= min_dist or D_r > max_dist:
-					msg_rueda = Twist2DStamped()
-					msg_rueda.v = 0
-					msg_rueda.omega *= 10
-					
-					self.pub_control.publish(msg_rueda)
-		
-		msg = bridge.cv2_to_imgmsg(image, "bgr8")
-
-		self.pub_camara.publish(msg)
-
 	def callback_control(self, msg):
 		axes = list(msg.axes)
 		buttons = list(msg.buttons)
-
-		B = buttons[1]
-		
-		# Freno de emergencia
-		if B == 1:
-			for i in range(len(axes)):
-				axes[i] = 0
 	
 		# Control del drift
 		drift_tol = 0.1
@@ -148,6 +110,13 @@ class Template(object):
 			mensaje.v = axes[5]
 
 		mensaje.omega = axes[0]	
+		
+		B = buttons[1]
+		
+		# Freno de emergencia
+		if B == 1:
+			mensaje.v = 0
+			mensaje.omega = 0
 
 		self.pub_control.publish(mensaje)
 		
@@ -183,52 +152,53 @@ class Template(object):
 	
 	# Ejecuta una instruccion que se haya pedido, devolviendo False
 	# si NO coincide y True si es la indicada
-	def ejecutar_instruccion(self, texto, instruccion, v_lin, v_ang, t):
+	def ejecutar_instruccion(self, texto, instruccion, v_lin, v_ang, t, inversa=False):
 		# Maxima diferencia entre strings para considerar la instruccion
 		MAX_DIST = 2
 
 		distancia = self.levenshtein(texto, instruccion)
 
 		if distancia <= MAX_DIST:
-			msg_rueda = Twist2DStamped()
-			self.frenar = False
-	
-			# Frena
-			if v_lin == -532:
-				self.frenar = True
+			if instruccion == "avanzar" or instruccion == "retroceder":
+				decir("Durante cuantos segundos?")
+				self.pub_voz.publish("!")
+				sleep(5)
 				
-			else:
+				while self.valid == False:
+					decir("Por favor, di un numero entero positivo")
+					self.pub_voz.publish("!")
+					sleep(5)
+				
+				t = self.t_recuperado
+		
+			decir(instruccion)
+			msg_rueda = Twist2DStamped()
+			
+			# No queremos agregar instrucciones cuando lo llamamos desde volver	
+			if not inversa:
 				self.instrucciones.append(self.inst_inversa[instruccion])
 
 			self.v_lineal = v_lin
 			self.v_angular = v_ang
-	
-			msg_rueda.v = v_lin
-			msg_rueda.omega = v_ang	
 
 			t_actual = time()
-
+			
+			msg_rueda.v = self.v_lineal
+			msg_rueda.omega = self.v_angular
+			
 			# Ejecutar durante t segundos
 			while time() - t_actual <= t:
-				print(self.frenar)
-				if self.frenar == True:
-					print("frenafrena")
-					msg_rueda.v = 0
-					msg_rueda.omega = 0
-					
-					self.v_lineal = 0
-					self.v_angular = 0
-					
-					self.pub_control.publish(msg_rueda)
-					break
-				else:
-					self.pub_control.publish(msg_rueda)
-				
+				self.pub_control.publish(msg_rueda)
+
 			# Pasados los t segundos, que frene absolutamente
 			msg_rueda.v = 0
 			msg_rueda.omega = 0
 			
 			self.pub_control.publish(msg_rueda)
+			
+			# Reseteamos el tiempo recuperado
+			self.t_recuperado = 0
+			self.valid = False
 
 			return True
 
@@ -237,7 +207,7 @@ class Template(object):
 	def callback_voz(self, msg):
 		texto = msg.data
 		
-		instrucciones = ["avanzar", "retroceder", "izquierda", "derecha", "frenar", "voltear"]
+		instrucciones = ["avanzar", "retroceder", "izquierda", "derecha", "girar"]
 		
 		# Propiedades de cada accion 
 		# Tiene la forma [vel_lineal, vel_angular, tiempo]
@@ -256,6 +226,8 @@ class Template(object):
 		MAX_DIST = 2
 		bailar_dist = self.levenshtein(texto, "bailar")
 		if bailar_dist <= MAX_DIST:
+			decir("dale a tu cuerpo alegria macarena")
+			
 			msg_rueda = Twist2DStamped()
 			
 			instrucciones = {
@@ -264,10 +236,10 @@ class Template(object):
 				3: [0, -10, self.tiempo(math.pi / 2)],
 				4: [0, 10, self.tiempo(math.pi / 2)],
 				5: [0, -10, self.tiempo(math.pi / 4)],
-				6: [10, 0, 0.5],
-				7: [-10, 0, 1],
-				8: [10, 0, 1],
-				9: [-10, 0, 0.5]				
+				6: [8, 0, 0.25],
+				7: [-8, 0, 0.5],
+				8: [8, 0, 0.5],
+				9: [-8, 0, 0.25]				
 			}
 			
 			for i in range(1, 10):
@@ -280,17 +252,7 @@ class Template(object):
 
 				# Ejecutar durante t segundos
 				while time() - t_actual <= t:
-					if self.frenar == True:
-						msg_rueda.v = 0
-						msg_rueda.omega = 0
-						
-						self.v_lineal = 0
-						self.v_angular = 0
-						
-						self.pub_control.publish(msg_rueda)
-						break
-					else:
-						self.pub_control.publish(msg_rueda)
+					self.pub_control.publish(msg_rueda)
 				
 				msg_rueda.v = 0
 				msg_rueda.omega = 0	
@@ -307,18 +269,68 @@ class Template(object):
 		if dist <= MAX_DIST:
 			for i in range(len(self.instrucciones)):
 				largo = len(self.instrucciones)
-				
+
 				inst = self.instrucciones[largo - 1 - i]
 				
 				v_lin, v_ang, t = self.propiedades[inst]
 				
-				self.ejecutar_instruccion(inst, inst, v_lin, v_ang, t)
+				self.ejecutar_instruccion(inst, inst, v_lin, v_ang, t, True)
 				
+			self.instrucciones = []
 			return
 		
 		borrar_dist = self.levenshtein(texto, "borrar")
 		if borrar_dist <= MAX_DIST:
 			self.instrucciones = []
+			
+		pista_dist = self.levenshtein(texto, "pista")
+		if pista_dist <= MAX_DIST:
+			msg_rueda = Twist2DStamped()
+			
+			I_LIM = 8
+			
+			instrucciones = {
+				1: [-10, 0, 3], 
+				2: [0, 10, self.tiempo(math.pi / 3)],
+				3: [-10, 0, 1.4],
+				4: [0, 10, self.tiempo(math.pi / 4)],
+				5: [-10, 0, 2],
+				6: [0, 10, self.tiempo(math.pi / 4.2)],
+				7: [-10, 0, 1.7],
+				8: [0, 10, self.tiempo(math.pi / 3)],
+
+			}
+			
+			for i in range(1, I_LIM+1):
+				v_lin, v_ang, t = instrucciones[i]
+					
+				msg_rueda.omega = v_ang
+				msg_rueda.v = v_lin
+				
+				t_actual = time()
+
+				# Ejecutar durante t segundos
+				while time() - t_actual <= t:
+					self.pub_control.publish(msg_rueda)
+				
+				msg_rueda.v = 0
+				msg_rueda.omega = 0	
+				
+				self.pub_control.publish(msg_rueda)
+			
+			return
+
+	def callback_tiempo(self, msg):
+		texto = msg.data
+		# Por algun motivo, el uno no lo toma como entero
+		if texto == "uno":
+			self.valid = True
+			self.t_recuperado = 1
+		elif not texto.isdigit():
+			self.valid = False
+		else:
+			self.valid = True
+			self.t_recuperado = int(msg.data)
 
 def main():
 	# Nodo local del Duckiebot
