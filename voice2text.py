@@ -64,7 +64,7 @@ class Template(object):
 							self.pub_tiempo.publish(msg)
 						elif instruccion == "buscar":
 							pagina = wiki.page(msg.data)
-							resumen = pagina.summary[0:60]
+							resumen = pagina.summary
 							msg.data = resumen
 							self.pub_wiki.publish(msg)
 					else:
