@@ -11,20 +11,25 @@ from sensor_msgs.msg import Image, Joy
 # Se pueden ver dentro del Duckiebot
 from duckietown_msgs.msg import Twist2DStamped
 
+# Procesamiento de imgs con ML:
+import cv2 
+from cv_bridge import CvBridge
+
 import math
 import numpy as np
 from time import time, sleep
 from random import randint
 
 import pyttsx3
+
 eng = pyttsx3.init()
 
 # Propiedades de voz
 eng.setProperty('voice', 'spanish-latin-am')
-eng.setProperty('volume', 1.0)
+eng.setProperty('volume', 40.0)
 
 eng.say("Quack quack!!!!")
-#eng.runAndWait()
+eng.runAndWait()
 
 class Template(object):
 	# Calcula el tiempo que le toma al duckiebot girar en un angulo
@@ -230,7 +235,8 @@ class Template(object):
 		bailar_dist = self.levenshtein(texto, "bailar")
 		if bailar_dist <= MAX_DIST:
 			cancion = randint(0, len(self.canciones)-1)
-			decir(self.canciones[cancion])
+			eng.say(self.canciones[cancion])
+			eng.runAndWait()
 			
 			msg_rueda = Twist2DStamped()
 			
@@ -332,8 +338,8 @@ class Template(object):
 		chiste_dist = self.levenshtein(texto, "chiste")
 		if chiste_dist <= MAX_DIST:
 			chiste = randint(0, len(self.chistes)-1)
-			decir(self.chistes[chiste])
-
+			eng.say(self.chistes[chiste])
+			eng.runAndWait()
 
 	def callback_tiempo(self, msg):
 		texto = msg.data
@@ -349,8 +355,7 @@ class Template(object):
 			
 	def callback_wiki(self, msg):
 		texto = msg.data
-		eng.say(texto)
-		eng.runAndWait()
+		print(texto)
 
 def main():
 	# Nodo local del Duckiebot
