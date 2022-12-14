@@ -41,14 +41,14 @@ class Template(object):
 		    run = False
 		    return
 
-		# Ejecutar el microfono solo si no es<ta activo (evita lag)
+		# Ejecutar el microfono solo si no esta activo (evita lag)
 		if (self.A == 1 and not active) or auto:
 			active = True
 			with sr.Microphone() as source:
 				if not auto:
 					print("Quack quack...")
 				else:
-					print("Quack", instruccion)
+					print("Quack %s..." % instruccion)
 				audio = self.r.listen(source, None, 1.5)
 
 				try:
@@ -63,11 +63,11 @@ class Template(object):
 						elif instruccion == "buscar":
 							pagina = wiki.page(msg.data)
 							resumen = pagina.summary[0:60]
-							print("Resumen: %s" % resumen)
-							self.pub_wiki.publish(resumen)
-					# Sino, es probablemente una instruccion
+							msg.data = resumen
+							self.pub_wiki.publish(msg)
 					else:
-deco				except Exception as e:
+						self.pub_voz.publish(msg)
+				except Exception as e:
 					print("No quackche", str(e))
 
 				active = False
