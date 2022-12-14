@@ -3,7 +3,7 @@
 # ROS cosas:
 import rospy 
 # http://wiki.ros.org/std_msgs
-from std_msgs.msg import String, Int32 
+from std_msgs.msg import String, Int32, Empty
 # http://wiki.ros.org/geometry_msgs
 from geometry_msgs.msg import Twist
 # http://wiki.ros.org/sensor_msgs
@@ -11,31 +11,20 @@ from sensor_msgs.msg import Image, Joy
 # Se pueden ver dentro del Duckiebot
 from duckietown_msgs.msg import Twist2DStamped
 
-# Procesamiento de imgs con ML:
-import cv2 
-from cv_bridge import CvBridge
-
 import math
 import numpy as np
 from time import time, sleep
+from random import randint
 
 import pyttsx3
-
 eng = pyttsx3.init()
 
 # Propiedades de voz
 eng.setProperty('voice', 'spanish-latin-am')
 eng.setProperty('volume', 1.0)
 
-def crearTextoVoz(string):
-	# Hay un delay; las primeras 5 letras nunca las verbaliza
-	return "aaaaa" + string
-	
-def decir(string):
-	eng.say(crearTextoVoz(string))
-	eng.runAndWait()
-
-decir("Quack quack!!!!")
+eng.say("Quack quack!!!!")
+#eng.runAndWait()
 
 class Template(object):
 	# Calcula el tiempo que le toma al duckiebot girar en un angulo
@@ -55,11 +44,11 @@ class Template(object):
 		rospy.Subscriber("/duckiebot/joy", Joy, self.callback_control)
 		rospy.Subscriber("/duckiebot/voz/v2t", String, self.callback_voz)
 		rospy.Subscriber("/duckiebot/voz/tiempo", String, self.callback_tiempo)
+		rospy.Subscriber("/duckiebot/voz/wiki", String, self.callback_wiki)
 		
 		# Publishers:
-		self.pub_camara = rospy.Publisher("/duckiebot/camera_node/image/test", Image, queue_size=1)
-		self.pub_control = rospy.Publisher("/duckiebot/wheels_driver_node/car_cmd", Twist2DStamped, queue_size=1)
-		self.pub_voz = rospy.Publisher("/duckiebot/voz/publicar_msg", String, queue_size=1)
+		self.pub_control = rospy.Publisher("/duckiebot/wheels_driver_node/car_cmd", Twist2DStamped, queue_size=10)
+		self.pub_voz = rospy.Publisher("/duckiebot/voz/publicar_msg", String, queue_size=10)
 		
 		# Extras:
 		self.instrucciones = []
@@ -82,6 +71,15 @@ class Template(object):
 			"girar": [0, 10, self.tiempo(math.pi)],
 			"girar_d": [0, -10, self.tiempo(math.pi)]
 		}
+		
+		self.chistes = ["como termina una carrera entre dos patos... empatados", 
+		"que pasa cuando tiras un pato a una piscina... nada", 
+		"que hace un pato en una pista de hielo... patina", 
+		"como se aman los patos... pa toda la vida"]
+		
+		self.canciones = [ "dale a tu cuerpo alegria macarena",
+		"torero, poner el alma en el ruedo, no importa lo que se venga pa que sepas que te quiero",
+		"ama barbi gerl, in a barbi weeerld, laif in plastic is fantastic"]
 		
 	def callback_control(self, msg):
 		axes = list(msg.axes)
@@ -160,18 +158,23 @@ class Template(object):
 
 		if distancia <= MAX_DIST:
 			if instruccion == "avanzar" or instruccion == "retroceder":
-				decir("Durante cuantos segundos?")
-				self.pub_voz.publish("!")
+				eng.say("Durante cuantos segundos?")
+				eng.runAndWait()
+				
+				self.pub_voz.publish("tiempo")
 				sleep(5)
 				
 				while self.valid == False:
-					decir("Por favor, di un numero entero positivo")
-					self.pub_voz.publish("!")
+					eng.say("Por favor, di un numero entero positivo")
+					eng.runAndWait()
+					self.pub_voz.publish("tiempo")
 					sleep(5)
 				
 				t = self.t_recuperado
 		
-			decir(instruccion)
+			eng.say(instruccion)
+			eng.runAndWait()
+			
 			msg_rueda = Twist2DStamped()
 			
 			# No queremos agregar instrucciones cuando lo llamamos desde volver	
@@ -226,7 +229,8 @@ class Template(object):
 		MAX_DIST = 2
 		bailar_dist = self.levenshtein(texto, "bailar")
 		if bailar_dist <= MAX_DIST:
-			decir("dale a tu cuerpo alegria macarena")
+			cancion = randint(0, len(self.canciones)-1)
+			decir(self.canciones[cancion])
 			
 			msg_rueda = Twist2DStamped()
 			
@@ -320,6 +324,17 @@ class Template(object):
 			
 			return
 
+		buscar_dist = self.levenshtein(texto, "buscar")
+		if buscar_dist <= MAX_DIST:
+			self.pub_voz.publish("buscar")
+			return
+			
+		chiste_dist = self.levenshtein(texto, "chiste")
+		if chiste_dist <= MAX_DIST:
+			chiste = randint(0, len(self.chistes)-1)
+			decir(self.chistes[chiste])
+
+
 	def callback_tiempo(self, msg):
 		texto = msg.data
 		# Por algun motivo, el uno no lo toma como entero
@@ -331,16 +346,22 @@ class Template(object):
 		else:
 			self.valid = True
 			self.t_recuperado = int(msg.data)
+			
+	def callback_wiki(self, msg):
+		texto = msg.data
+		eng.say(texto)
+		eng.runAndWait()
 
 def main():
 	# Nodo local del Duckiebot
 	rospy.init_node("bot") 
 	
+	print("Funcionando!")
+	
 	obj = Template('args')
 	
 	# Loop
 	rospy.spin()
-
 
 if __name__ == '__main__':
 	main()
