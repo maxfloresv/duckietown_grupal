@@ -10,7 +10,7 @@ Se trata de un robot que escucha instrucciones y responde mediante voz. Algunas 
 
 La información sobre los avances del proyecto puede ser encontrada en la [wiki](https://github.com/maxfloresv/robot_interactivo/wiki).
 
-### 📄 Documentación adicional:
+### 🎮 Manejo del Joystick
 Para el desarrollo del proyecto, se ocupó un control de Xbox 360, y se usaron los siguientes botones:
 * Palanca izq. para el giro (3 en la imagen).
 * LT para retroceder (6 en la imagen). 
@@ -22,3 +22,10 @@ La referencia al control está en la función `callback_control` del [archivo pr
 
 ### 📚 Comandos y definiciones útiles:
 El siguiente enlace [(click acá)](https://colab.research.google.com/drive/12NgKqmJJR6yABCUIHCZr6NJvG4wegARU) contiene una guía sobre el uso del Duckiebot.
+
+### 👾¿Cómo lo utilizamos?
+Para comenzar a utilizar el Duckiebot, se deben seguir lo siguiente. Primero se abre la consola en la cual se debe ingresar al Duckiebot ingresando `ssh -X duckiebot@duckiebot.local` y se ingresa la contraseña. Luego se abren las carpetas ingresando `cd \duckiebot\cat..\src\duckietown\src...`. Se ejecuta `roslaunch ros_cap duckie_core.local` y se ejecuta el programa.
+Para esto se abre una nueva terminal en la consola???y se utiliza `ifconfig` la cual se utiliza para configurar y ver el estado de las interfaces de red en los sistemas operativos Linux. Copiamos la IP encontrada y conectamos el duckiebot con el computador a travéz de `export ROS_IP:...` y copiamos justo a continuación la IP copiada anteriormente. 
+se ejecuta `python3 duckiebot..???` 
+
+### 📄 Documentación adicional:
