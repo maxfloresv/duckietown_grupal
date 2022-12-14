@@ -24,8 +24,7 @@ La referencia al control está en la función `callback_control` del [archivo pr
 El siguiente enlace [(click acá)](https://colab.research.google.com/drive/12NgKqmJJR6yABCUIHCZr6NJvG4wegARU) contiene una guía sobre el uso del Duckiebot.
 
 ### 👾¿Cómo lo utilizamos?
-Para comenzar a utilizar el Duckiebot, se deben seguir lo siguiente. Primero se abre la consola en la cual se debe ingresar al Duckiebot ingresando `ssh -X duckiebot@duckiebot.local` y se ingresa la contraseña. Luego se abren las carpetas ingresando `cd \duckiebot\cat..\src\duckietown\src...`. Se ejecuta `roslaunch ros_cap duckie_core.local` y se ejecuta el programa.
-Para esto se abre una nueva terminal en la consola???y se utiliza `ifconfig` la cual se utiliza para configurar y ver el estado de las interfaces de red en los sistemas operativos Linux. Copiamos la IP encontrada y conectamos el duckiebot con el computador a travéz de `export ROS_IP:...` y copiamos justo a continuación la IP copiada anteriormente. 
-se ejecuta `python3 duckiebot..???` 
+Para comenzar a utilizar el Duckiebot, se deben seguir lo siguiente. Primero se abre la consola en la cual se debe ingresar al Duckiebot ingresando `ssh -X duckiebot@duckiebot.local` y se ingresa la contraseña. Luego se abren las carpetas ingresando `cd \duckiebot\catkin_ws\src\desafios_2022\src`. Se ejecuta `roslaunch ros_cap duckie_core.local` y se ejecuta el programa.
+Para esto se abre una nueva terminal en la consola y se utiliza `ifconfig` la cual se utiliza para configurar y ver el estado de las interfaces de red en los sistemas operativos Linux. Copiamos la IP encontrada y conectamos el duckiebot con el computador a travéz de `export ROS_IP=...` y pegamos justo a continuación la IP copiada anteriormente. Se ejecuta `cd duckiebot_pc` y luego `python3 voice2text.py` para ejecutar el programa del PC.
 
 ### 📄 Documentación adicional:
