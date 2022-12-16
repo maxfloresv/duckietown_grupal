@@ -40,5 +40,18 @@ Por un lado, en el archivo duckiebot.py encontramos la librería `pyttsx3` hace 
 
 Luego se define la función tiempo la cual al ingresar un ángulo, calcula el tiempo que le toma al duckiebot girar en ese ángulo. Para esto calculamos con cronómetro que el duckiebot se demora 1.5 segundos.
 
-Luego definimos las propiedades del inicializador en el cual están los Subscribers los cuales reciben información de el Joystick, del tiempo en que queremos que gire, de la voz y de wikipedia.
+Luego definimos las propiedades del inicializador en el cual están los Subscribers los cuales reciben información de el Joystick, del tiempo en que queremos que gire, de la voz y de wikipedia. \\
+Además definimos los Publishers los cuales publican la información recibida a las ruedas y al parlante. Las siguientes son propiedades del estado inicial del duckiebot y propiedades que se le asignan a cada instrucción para el momento de ejecutar éstas.
+Éstas últimas están dadas por \[v_lineal, v_angular, tiempo de ejecución].
+
+Se define la función `callback_control(self, msg)` la cual le asigna a cada botón de joystick y movimiento de las ruedas cambiando su velociad lineal o angular. También se define el botón B como freno de emergencia y el freno si se presiona acelerar y retroceder al mismo tiempo.
+
+Se utiliza la *distancia de Levenshtein* la cual nos entrega el número mínimo de operaciones que se deben hacer para transformar un string en otro. Éstas operaciones son agregar, eliminar o sustituir un elemento de este string. Definimos esta función para que si decimos \"avanzar" y el duckiebot detecta \"avanza", realice igual la acción. 
+
+Se define `ejecutar distancia` la cual ejecuta una instrucción que se haya pedido, devolviendo False si no coincide con las funciones que se agregan y True si es la indicada. Ésto se realiza sólo si la palabra que se obtuvo tiene menos de 2 operaciones de diferencia con las indicadas y para las instrucciones avanzar y retroceder pregunta de vuelta el tiempo en que se quiere que se realice la acción y se publica el tiempo ingresado. Python sleep es una función que permite detener un programa durante un tiempo y luego permitir que continúe sin alteraciones, en nuestro caso durante 5 segundos.
+
+
+
+
+***¿por que les pusimos el tiempo 3 a avanzar y retroceder?
 
