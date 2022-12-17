@@ -56,18 +56,10 @@ class Template(object):
 		self.pub_voz = rospy.Publisher("/duckiebot/voz/publicar_msg", String, queue_size=10)
 		
 		# Extras:
-		self.instrucciones = []
 		self.vel_lineal = 0
 		self.vel_angular = 0
 		self.t_recuperado = 0
 		self.valid = False
-		self.inst_inversa = {
-			"avanzar": "retroceder",
-			"retroceder": "avanzar",
-			"izquierda": "derecha",
-			"derecha": "izquierda",
-			"girar": "girar_d" # voltear_d = voltear inversa
-		}
 		self.propiedades = {
 			"avanzar": [-5, 0, 3],
 			"retroceder": [5, 0, 3],
@@ -169,6 +161,7 @@ class Template(object):
 				self.pub_voz.publish("tiempo")
 				sleep(5)
 				
+				# Mientras el input no sea valido, repetir
 				while self.valid == False:
 					eng.say("Por favor, di un numero entero positivo")
 					eng.runAndWait()
@@ -177,6 +170,7 @@ class Template(object):
 				
 				t = self.t_recuperado
 		
+			# Decir que instruccion se esta ejecutando
 			eng.say(instruccion)
 			eng.runAndWait()
 			
@@ -231,9 +225,12 @@ class Template(object):
 			if self.ejecutar_instruccion(texto, inst, v_lin, v_ang, tiempo):
 				return
 				
+		# Instrucciones no-generales (no se adaptaban a la funcion ejecutar_instruccion):
 		MAX_DIST = 2
 		bailar_dist = self.levenshtein(texto, "bailar")
+		
 		if bailar_dist <= MAX_DIST:
+			# Elegimos una cancion al azar
 			cancion = randint(0, len(self.canciones)-1)
 			eng.say(self.canciones[cancion])
 			eng.runAndWait()
@@ -270,65 +267,6 @@ class Template(object):
 				self.pub_control.publish(msg_rueda)
 			
 			return
-	
-		volver_dist = self.levenshtein(texto, "volver")
-		vuelve_dist = self.levenshtein(texto, "vuelve")
-		
-		dist = min(volver_dist, vuelve_dist)
-		
-		if dist <= MAX_DIST:
-			for i in range(len(self.instrucciones)):
-				largo = len(self.instrucciones)
-
-				inst = self.instrucciones[largo - 1 - i]
-				
-				v_lin, v_ang, t = self.propiedades[inst]
-				
-				self.ejecutar_instruccion(inst, inst, v_lin, v_ang, t, True)
-				
-			self.instrucciones = []
-			return
-		
-		borrar_dist = self.levenshtein(texto, "borrar")
-		if borrar_dist <= MAX_DIST:
-			self.instrucciones = []
-			
-		pista_dist = self.levenshtein(texto, "pista")
-		if pista_dist <= MAX_DIST:
-			msg_rueda = Twist2DStamped()
-			
-			I_LIM = 8
-			
-			instrucciones = {
-				1: [-10, 0, 3], 
-				2: [0, 10, self.tiempo(math.pi / 3)],
-				3: [-10, 0, 1.4],
-				4: [0, 10, self.tiempo(math.pi / 4)],
-				5: [-10, 0, 2],
-				6: [0, 10, self.tiempo(math.pi / 4.2)],
-				7: [-10, 0, 1.7],
-				8: [0, 10, self.tiempo(math.pi / 3)],
-
-			}
-			
-			for i in range(1, I_LIM+1):
-				v_lin, v_ang, t = instrucciones[i]
-					
-				msg_rueda.omega = v_ang
-				msg_rueda.v = v_lin
-				
-				t_actual = time()
-
-				# Ejecutar durante t segundos
-				while time() - t_actual <= t:
-					self.pub_control.publish(msg_rueda)
-				
-				msg_rueda.v = 0
-				msg_rueda.omega = 0	
-				
-				self.pub_control.publish(msg_rueda)
-			
-			return
 
 		buscar_dist = self.levenshtein(texto, "buscar")
 		if buscar_dist <= MAX_DIST:
@@ -340,6 +278,7 @@ class Template(object):
 			chiste = randint(0, len(self.chistes)-1)
 			eng.say(self.chistes[chiste])
 			eng.runAndWait()
+			return
 
 	def callback_tiempo(self, msg):
 		texto = msg.data
