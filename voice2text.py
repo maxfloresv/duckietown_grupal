@@ -1,4 +1,3 @@
-
 import rospy
 from std_msgs.msg import String, Empty
 from sensor_msgs.msg import Joy
@@ -8,6 +7,7 @@ import speech_recognition as sr
 import sys
 import wikipediaapi
 
+# Establecemos el lenguaje a ESP
 wiki = wikipediaapi.Wikipedia('es')
 
 # Mientras run=True, corre el programa
@@ -38,6 +38,7 @@ class Template(object):
 		# Modifico los valores globales
 		global run, active
 
+		# Termino de emergencia del programa
 		if self.X == 1:
 		    run = False
 		    return
@@ -50,6 +51,8 @@ class Template(object):
 					print("Quack quack...")
 				else:
 					print("Quack %s..." % instruccion)
+					
+				# Escuchar instrucciones por 1.5 segundos
 				audio = self.r.listen(source, None, 1.5)
 
 				msg = String()
@@ -59,6 +62,7 @@ class Template(object):
 					print("Lo quack dijiste fue:", str(text))
 					msg.data = str(text)
 					
+					# auto=True indica que fue una llamada forzada de la funcion
 					if auto and instruccion != None:
 						if instruccion == "tiempo":
 							self.pub_tiempo.publish(msg)
@@ -69,6 +73,7 @@ class Template(object):
 							self.pub_wiki.publish(msg)
 					else:
 						self.pub_voz.publish(msg)
+						
 				except Exception as e:
 					# Si no capta la instruccion, debe volver a pedir input
 					if instruccion == "tiempo":
@@ -87,6 +92,7 @@ class Template(object):
 	def callback_req(self, msg):
 		inst = msg.data
 		
+		# Llamada forzada de la funcion callback
 		self.callback(inst, True)	
 
 def main():
@@ -98,6 +104,7 @@ def main():
 	obj = Template('args')
 
 	rate = rospy.Rate(10)
+	# Loop para ejecutar infinitamente ROS, salvo que se pulse X
 	while not rospy.is_shutdown():
 		if run == False:
 			sys.exit()
