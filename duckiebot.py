@@ -175,10 +175,6 @@ class Template(object):
 			eng.runAndWait()
 			
 			msg_rueda = Twist2DStamped()
-			
-			# No queremos agregar instrucciones cuando lo llamamos desde volver	
-			if not inversa:
-				self.instrucciones.append(self.inst_inversa[instruccion])
 
 			self.v_lineal = v_lin
 			self.v_angular = v_ang
