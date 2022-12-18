@@ -24,6 +24,7 @@ La referencia al control está en la función `callback_control` del [archivo pr
 El siguiente enlace [(click acá)](https://colab.research.google.com/drive/12NgKqmJJR6yABCUIHCZr6NJvG4wegARU) contiene una guía sobre el uso del Duckiebot.
 
 ### 👾¿Cómo lo utilizamos?
+**Necesitarás conexión estable a internet!!**
 Para comenzar a utilizar el Duckiebot, se debe seguir lo siguiente. 
 
 Primero se abre la consola en la cual se debe ingresar al Duckiebot utilizando `ssh -X duckiebot@duckiebot.local` y se ingresa la contraseña. Luego se abren las carpetas ingresando `cd \duckiebot\catkin_ws\src\desafios_2022\src`. Se ejecuta `roslaunch ros_cap duckie_core.local` y se ejecuta el programa en una nueva terminal desde el duckiebot con rosrun desafios_2022 duckiebot.py.
