@@ -73,6 +73,6 @@ Por otro lado, en el archivo **voice2text**:
 
 
 
-
+Adjuntamos además en este [link](https://drive.google.com/drive/u/1/folders/1Bi4bI9MDvnyQnD3DUqhRBa8QVUB1PoVH) el Google Drive utilizado por el equipo, donde podrás encontar material adicional, y el informe técnico y final del proyecto.
 
 
