@@ -5,7 +5,7 @@ Se trata de un robot que escucha instrucciones y responde mediante voz. Algunas 
 
 * Gama completa de movimientos comandados por voz.
 * Hacer que el Duckiebot pueda decir datos curiosos/chistes.
-* Hacer que el Duckiebot sea capaz de bailar con una instrucción.
+* Hacer que el Duckiebot sea capaz de cantar y bailar con una instrucción.
 * Agregar palabras clave ocultas de interacción para realizar acciones secretas (*Easter Eggs*).
 
 La información sobre los avances del proyecto puede ser encontrada en la [wiki](https://github.com/maxfloresv/robot_interactivo/wiki).
