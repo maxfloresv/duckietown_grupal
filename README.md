@@ -73,12 +73,10 @@ Por otro lado, en el archivo **voice2text**:
 
 + Luego, `callback_control` a partir de la lista que recupera la posición de cada botón del Joystick, se le asigna la variable A al botón "A" del joystick y lo mismo con el botón "X".
 
-+ La función `callback_req` recibe una instrucción del Duckiebot ("tiempo" ó "buscar"), lo que hace que se llame a la función que pide *inputs* de voz. Esta fue una manera de solucionar la comunicación entre el robot y el PC cuando se necesitaba algún dato (p. ej., el tiempo que el Duckiebot debía avanzar cuando se le daba esa instrucción).
++ La función `callback_req` recibe una instrucción del Duckiebot ("tiempo" ó "buscar"), lo que hace que se llame a la función que pide *inputs* de voz. Esta fue una manera de solucionar la comunicación entre el robot y el PC cuando se necesitaba algún dato (p. ej., el tiempo que el Duckiebot debía avanzar).
 
 + Por último, dentro de `main`, se define un Loop el cual ejecuta ROS salvo que se presione el botón X ya que éste transforma `run = False` y por lo tanto deja de correr el programa.
 
 Adjuntamos además en este [link](https://drive.google.com/drive/u/1/folders/1Bi4bI9MDvnyQnD3DUqhRBa8QVUB1PoVH) el Google Drive utilizado por el equipo, donde podrás encontar material adicional, y el informe técnico y final del proyecto.
-
-Nachito tqm jkdskjdsdkj gracias por el chamuyo
 
 
