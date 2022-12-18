@@ -1,6 +1,7 @@
 # 🦆 Duckiebot interactivo
 Este proyecto, desarrollado por [Nacho Dagach](https://github.com/ignaciodagachabugattas), [Pichi](https://github.com/pichiuwu) y [Max](https://github.com/maxfloresv), se está realizando para el curso **CD2201 Módulo Interdisciplinario** (Duckietown).
 
+Recomendamos leas esta guia tras haber visto el video de demostración del proyecto en el siguiente [link](https://www.youtube.com/watch?v=ZXwcHaN6O-M&ab_channel=ProfeNacho), para que lo conozcas de primera -mano-, pata, ala
 Se trata de un robot que escucha instrucciones y responde mediante voz. Algunas de las interacciones adicionales que se buscan implementar son:
 
 * Gama completa de movimientos comandados por voz.
@@ -35,7 +36,7 @@ Para esto se abre una nueva terminal en la consola y se utiliza `ifconfig` la cu
 Luego copiamos la IP encontrada y conectamos el duckiebot con el computador a travéz de `export ROS_IP=...` y pegamos justo a continuación la IP copiada anteriormente. 
 Se ejecuta `cd duckiebot_pc` y luego `python3 voice2text.py` para ejecutar el programa desde el PC.
 
-Para que el duckiebot comienze a recibir instrucciones por voz se presiona el botón A en el Joystic. Cuando responde quack quack se le entrega la instrucción y se verá en la consola la instrucción recibida.
+Para que el duckiebot comienze a recibir instrucciones por voz se presiona el botón A en el Joystick. Cuando responde quack quack se le entrega la instrucción y se verá en la consola la instrucción recibida.
 
 ### 📄 Documentación adicional:
 Por un lado, en el archivo **duckiebot.py**:
