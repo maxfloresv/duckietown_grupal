@@ -67,7 +67,7 @@ Por otro lado, en el archivo **voice2text**:
 + Luego de importar las librerías se establece el lenguaje español de la wikipedia. Y se define `run = True` el cual define si corre o no el programa.
 
 + se define el objeto de la clase en el cual se definen sus propiedades como los Publishers de voz a texto, de tiempo y de la búsqueda en wikipedia, además de los Subscribers del Joystick y de la publicación de mensaje de wikipedia. 
-  El programa de vos está dado por `sr.Recognizer()` y se define las propiedades A y X como 0.
+  El programa de voz está dado por `sr.Recognizer()` y se define las propiedades A y X como 0.
   
 + Se define el `callback` en la cual se encuentran las valiables globales run y active. Se utiliza el botón X como un término de emergencia del programa ya que deja de correr este último. Luego se utiliza el botón A para ejecutar el micrófono. En el caso en que sea una llamada forzada de la función, la variable auto = True por lo que, por ejemplo si se recibe la instrucción avanzar, devolverá "Quack avanzar"
 
@@ -76,7 +76,7 @@ Por otro lado, en el archivo **voice2text**:
 + Luego, `callback_control` a partir de la lista que recupera la posición de cada botón del Joystick, se le asigna la variable A al botón "A" del joystick y lo mismo con el botón "X".
 + `callback_req` **no entendí lo que hace**
 
-+Por último, dentro de `main`, se define un Loop el cual ejecuta ROS salvo que se presiones el botón X ya que éste transforma `run = False` y por lo tanto deja de correr el programa.
++ Por último, dentro de `main`, se define un Loop el cual ejecuta ROS salvo que se presiones el botón X ya que éste transforma `run = False` y por lo tanto deja de correr el programa.
 
 Adjuntamos además en este [link](https://drive.google.com/drive/u/1/folders/1Bi4bI9MDvnyQnD3DUqhRBa8QVUB1PoVH) el Google Drive utilizado por el equipo, donde podrás encontar material adicional, y el informe técnico y final del proyecto.
 
