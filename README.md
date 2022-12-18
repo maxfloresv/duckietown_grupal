@@ -3,7 +3,7 @@ Este proyecto, desarrollado por [Nacho Dagach](https://github.com/ignaciodagacha
 
 Se trata de un robot que escucha instrucciones y responde mediante voz. Algunas de las interacciones adicionales que se buscan implementar son:
 
-* Rastrear instrucciones para volver a un cierto punto en el pasado.
+* Gama completa de movimientos comandados por voz.
 * Hacer que el Duckiebot pueda decir datos curiosos/chistes.
 * Hacer que el Duckiebot sea capaz de bailar con una instrucción.
 * Agregar palabras clave ocultas de interacción para realizar acciones secretas (*Easter Eggs*).
