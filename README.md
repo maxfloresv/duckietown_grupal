@@ -1,7 +1,8 @@
 # 🦆 Duckiebot interactivo
 Este proyecto, desarrollado por [Nacho Dagach](https://github.com/ignaciodagachabugattas), [Pichi](https://github.com/pichiuwu) y [Max](https://github.com/maxfloresv), se está realizando para el curso **CD2201 Módulo Interdisciplinario** (Duckietown).
 
-Recomendamos leas esta guia tras haber visto el video de demostración del proyecto en el siguiente [link](https://www.youtube.com/watch?v=ZXwcHaN6O-M&ab_channel=ProfeNacho), para que lo conozcas de primera -mano-, pata, ala
+Recomendamos leas esta guia tras haber visto el video de demostración del proyecto en el siguiente [link](https://www.youtube.com/watch?v=ZXwcHaN6O-M&ab_channel=ProfeNacho), para que lo conozcas de primera mano, pata o ala, según corresponda.
+
 Se trata de un robot que escucha instrucciones y responde mediante voz. Algunas de las interacciones adicionales que se buscan implementar son:
 
 * Gama completa de movimientos comandados por voz.
