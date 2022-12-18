@@ -54,7 +54,18 @@ Además definimos los Publishers los cuales publican la información recibida a 
 
 + En la función `callback_voz` se extraen las propiedades de las acciones recibidas antteriormente y si se ejecuta la acción se detiene el duckiebot. Además, se definen las propiedades de la función bailar, las cuales son tocar una canción random entre las definidas, avanzar y retroceder (instrucción de la 1 a la 5) y girar a la izquierda y a la derecha (instrucción de la 6 a la 9). Luego se publica este mensaje en las ruedas para ejecutar la acción. Luego de pasar el tiempo, se detiene el diuckiebot. 
 
-  La instrucción "volver" o "vuelve" ejecuta los elementos de la lista que se guarda con las instrucciones anteriores. "Borrar", como su nombre lo dice borra los elementos de esta lista para que se empiecen a contar desde cero. **PISTA?**
+  **La instrucción "volver" o "vuelve" ejecuta los elementos de la lista que se guarda con las instrucciones anteriores.** La instrucción "Borrar", como su nombre lo dice, borra los elementos de esta lista para que se empiecen a contar desde cero. **PISTA?** "Chiste" cuenta un chiste aleatorio entre los chistes definidos. 
+  
++ La función `callback_tiempo` transforma a entero el tiempo ingresado y cambia a True la variable `valid` si se ingresa un numero entero positivo o el cero.
++ La función `callback_wiki` devuelve los datos obtenidos de wikipedia y los escribe en la consola.
+
+Por otro lado, en el archivo **voice2text**:
++ Luego de importar las librerías se establece el lenguaje español de la wikipedia. Y se define `run = True` el cual define si corre o no el programa.
+
++ se define el objeto de la clase en el cual se definen sus propiedades como los Publishers de voz a texto, de tiempo y de la búsqueda en wikipedia, además de los Subscribers del Joystick y de la publicación de mensaje de wikipedia. 
+  El programa de vos está dado por `sr.Recognizer()` y se define las propiedades A y X como 0.
+  
++ Se define el `callback` en la cual se encuentran las valiables globales run y active. Se utiliza el botón X como un término de emergencia del programa ya que deja de correr este último. Luego se utiliza el botón A para ejecutar el micrófono. En el caso en que sea una llamada forzada de la función, la variable auto = True por lo que, por ejemplo si se recibe la instrucción avanzar, devolverá "Quack avanzar"
 
 
 
