@@ -58,7 +58,7 @@ Además definimos los Publishers los cuales publican la información recibida a 
 
 + En la función `callback_voz` se extraen las propiedades de las acciones recibidas antteriormente y si se ejecuta la acción se detiene el duckiebot. Además, se definen las propiedades de la función bailar, las cuales son tocar una canción random entre las definidas, avanzar y retroceder (instrucción de la 1 a la 5) y girar a la izquierda y a la derecha (instrucción de la 6 a la 9). Luego se publica este mensaje en las ruedas para ejecutar la acción. Luego de pasar el tiempo, se detiene el diuckiebot. 
 
-  **La instrucción "volver" o "vuelve" ejecuta los elementos de la lista que se guarda con las instrucciones anteriores.** La instrucción "Borrar", como su nombre lo dice, borra los elementos de esta lista para que se empiecen a contar desde cero. **PISTA?** "Chiste" cuenta un chiste aleatorio entre los chistes definidos. 
+  La instrucción "Borrar", como su nombre lo dice, borra los elementos de esta lista para que se empiecen a contar desde cero. "Chiste" cuenta un chiste aleatorio entre los chistes definidos. 
   
 + La función `callback_tiempo` transforma a entero el tiempo ingresado y cambia a True la variable `valid` si se ingresa un numero entero positivo o el cero.
 + La función `callback_wiki` devuelve los datos obtenidos de wikipedia y los escribe en la consola.
@@ -71,7 +71,12 @@ Por otro lado, en el archivo **voice2text**:
   
 + Se define el `callback` en la cual se encuentran las valiables globales run y active. Se utiliza el botón X como un término de emergencia del programa ya que deja de correr este último. Luego se utiliza el botón A para ejecutar el micrófono. En el caso en que sea una llamada forzada de la función, la variable auto = True por lo que, por ejemplo si se recibe la instrucción avanzar, devolverá "Quack avanzar"
 
++ **no se que poner en lo del try ya que no entiendo completamente bien lo de adentro así que no quiero escribir denuevo un chamullo jsjfj**
 
++ Luego, `callback_control` a partir de la lista que recupera la posición de cada botón del Joystick, se le asigna la variable A al botón "A" del joystick y lo mismo con el botón "X".
++ `callback_req` **no entendí lo que hace**
+
++Por último, dentro de `main`, se define un Loop el cual ejecuta ROS salvo que se presiones el botón X ya que éste transforma `run = False` y por lo tanto deja de correr el programa.
 
 Adjuntamos además en este [link](https://drive.google.com/drive/u/1/folders/1Bi4bI9MDvnyQnD3DUqhRBa8QVUB1PoVH) el Google Drive utilizado por el equipo, donde podrás encontar material adicional, y el informe técnico y final del proyecto.
 
